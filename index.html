@@ -246,6 +246,17 @@ nav{display:flex;align-items:center;height:56px;padding:0 24px;background:rgba(1
   <span>Carregando...</span>
 </div>
 
+<!-- BLOQUEADO -->
+<div id="blocked-screen" class="hidden" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);">
+  <div style="text-align:center;padding:40px;max-width:420px;">
+    <div style="font-size:64px;margin-bottom:24px;">🔒</div>
+    <div style="font-size:11px;color:var(--red);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;font-weight:700;">Acesso Bloqueado</div>
+    <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:12px;">Acesso expirado</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:28px;">Aguarde contato do suporte para regularizar seu acesso.</div>
+    <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border2);color:var(--text3);padding:10px 24px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:Inter,sans-serif;">Sair</button>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div id="modal" class="modal-overlay hidden">
   <div class="modal-box" id="modal-box"></div>
@@ -397,7 +408,25 @@ async function doReset() {
 function showLogin()  { document.getElementById('loading-screen').classList.add('hidden'); document.getElementById('login-screen').style.display='flex'; document.getElementById('reset-screen').classList.add('hidden'); document.getElementById('app-screen').classList.add('hidden'); }
 function showReset()  { document.getElementById('login-screen').style.display='none'; document.getElementById('reset-screen').classList.remove('hidden'); }
 function showLogin_() { document.getElementById('reset-screen').classList.add('hidden'); document.getElementById('login-screen').style.display='flex'; }
-function showApp()    { document.getElementById('loading-screen').classList.add('hidden'); document.getElementById('login-screen').style.display='none'; document.getElementById('reset-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden'); setupNav(); go('home'); }
+async function showApp() {
+  document.getElementById('loading-screen').classList.add('hidden');
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('reset-screen').classList.add('hidden');
+  // Check if blocked (skip for admin)
+  if (!isAdmin) {
+    try {
+      const { data: profile } = await sb.from('profiles').select('blocked').eq('id', currentUser.id).single();
+      if (profile?.blocked) {
+        document.getElementById('app-screen').classList.add('hidden');
+        document.getElementById('blocked-screen').classList.remove('hidden');
+        return;
+      }
+    } catch(e) {}
+  }
+  document.getElementById('blocked-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+  setupNav(); go('home');
+}
 
 // ═══════════════════════════════════════════
 //  NAV
