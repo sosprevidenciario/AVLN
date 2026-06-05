@@ -191,7 +191,48 @@ nav{display:flex;align-items:center;height:56px;padding:0 24px;background:rgba(1
       <div style="text-align:right;margin-top:12px;">
         <a onclick="showReset()" style="font-size:11px;color:var(--text3);cursor:pointer;transition:color .15s;" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--text3)'">Esqueci minha senha</a>
       </div>
+      <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);"><span style="font-size:11px;color:var(--text3);">Não tem conta? </span><a onclick="showRegister()" style="font-size:11px;color:var(--green);cursor:pointer;font-weight:700;">Criar conta</a></div>
     </div>
+  </div>
+</div>
+
+
+<!-- CADASTRO -->
+<div id="register-screen" class="login-screen hidden">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="login-icon">🥷🏿</div>
+      <div class="login-title">AVLN</div>
+      <div class="login-sub">Criar conta</div>
+    </div>
+    <div class="login-card">
+      <div id="reg-err" class="login-err hidden"></div>
+      <div id="reg-ok" class="hidden" style="font-size:12px;color:var(--green);background:var(--green-dim);border:1px solid var(--border2);padding:10px 14px;margin-bottom:16px;">Conta criada! Aguarde a liberação do administrador.</div>
+      <div class="form-row"><label class="lbl">Nome completo</label>
+        <input class="inp" id="reg-name" type="text" placeholder="Seu nome completo">
+      </div>
+      <div class="form-row"><label class="lbl">Email</label>
+        <input class="inp" id="reg-email" type="email" placeholder="seu@email.com">
+      </div>
+      <div class="form-row"><label class="lbl">Senha</label>
+        <input class="inp" id="reg-pw" type="password" placeholder="Mínimo 6 caracteres">
+      </div>
+      <button class="btn-full btn-login-green" id="btn-register" onclick="doRegister()">Criar conta</button>
+      <div style="text-align:center;margin-top:12px;">
+        <a onclick="showLogin()" style="font-size:11px;color:var(--text3);cursor:pointer;">← Voltar ao login</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AGUARDANDO APROVACAO -->
+<div id="pending-screen" class="hidden" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);">
+  <div style="text-align:center;padding:40px;max-width:420px;">
+    <div style="font-size:64px;margin-bottom:24px;">⏳</div>
+    <div style="font-size:11px;color:var(--amber);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;font-weight:700;">Aguardando aprovação</div>
+    <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:12px;">Conta criada!</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:28px;">Seu acesso está sendo analisado. Em breve o administrador irá liberar sua conta.</div>
+    <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border2);color:var(--text3);padding:10px 24px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:Inter,sans-serif;">Sair</button>
   </div>
 </div>
 
@@ -405,7 +446,37 @@ async function doReset() {
   else { okEl.classList.remove('hidden'); }
 }
 
-function showLogin()  { document.getElementById('loading-screen').classList.add('hidden'); document.getElementById('login-screen').style.display='flex'; document.getElementById('reset-screen').classList.add('hidden'); document.getElementById('app-screen').classList.add('hidden'); }
+
+function showRegister() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('reset-screen').classList.add('hidden');
+  document.getElementById('register-screen').classList.remove('hidden');
+  document.getElementById('pending-screen').classList.add('hidden');
+  document.getElementById('reg-err').classList.add('hidden');
+  document.getElementById('reg-ok').classList.add('hidden');
+}
+
+async function doRegister() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pw    = document.getElementById('reg-pw').value;
+  const errEl = document.getElementById('reg-err');
+  const okEl  = document.getElementById('reg-ok');
+  const btn   = document.getElementById('btn-register');
+  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+  if (!name||!email||!pw) { errEl.textContent='Preencha todos os campos.'; errEl.classList.remove('hidden'); return; }
+  if (pw.length<6) { errEl.textContent='Senha deve ter pelo menos 6 caracteres.'; errEl.classList.remove('hidden'); return; }
+  btn.disabled=true; btn.textContent='Criando...';
+  const {data,error} = await sb.auth.signUp({email, password:pw, options:{data:{full_name:name}}});
+  if (error) { errEl.textContent=error.message; errEl.classList.remove('hidden'); btn.disabled=false; btn.textContent='Criar conta'; return; }
+  if (data?.user) {
+    await sb.from('profiles').upsert({id:data.user.id, email, full_name:name, active:false, blocked:true, plan:'monthly'}).catch(()=>{});
+  }
+  okEl.classList.remove('hidden');
+  btn.disabled=true; btn.textContent='Conta criada!';
+}
+
+function showLogin()  { document.getElementById('loading-screen').classList.add('hidden'); document.getElementById('login-screen').style.display='flex'; document.getElementById('reset-screen').classList.add('hidden'); document.getElementById('register-screen').classList.add('hidden'); document.getElementById('pending-screen').classList.add('hidden'); document.getElementById('app-screen').classList.add('hidden'); }
 function showReset()  { document.getElementById('login-screen').style.display='none'; document.getElementById('reset-screen').classList.remove('hidden'); }
 function showLogin_() { document.getElementById('reset-screen').classList.add('hidden'); document.getElementById('login-screen').style.display='flex'; }
 async function showApp() {
@@ -418,7 +489,8 @@ async function showApp() {
       const { data: profile } = await sb.from('profiles').select('blocked').eq('id', currentUser.id).single();
       if (profile?.blocked) {
         document.getElementById('app-screen').classList.add('hidden');
-        document.getElementById('blocked-screen').classList.remove('hidden');
+        document.getElementById('register-screen').classList.add('hidden');
+        if (!profile?.active) { document.getElementById('pending-screen').classList.remove('hidden'); } else { document.getElementById('blocked-screen').classList.remove('hidden'); }
         return;
       }
     } catch(e) {}
