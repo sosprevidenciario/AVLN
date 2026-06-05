@@ -727,9 +727,16 @@ async function createMember() {
   if(!name||!email||!pw){toast('Preencha nome, email e senha','e');return;}
   const btn=document.getElementById('btn-create-member');
   btn.disabled=true; btn.textContent='Criando...';
+
+  // Cria o usuario no Auth
   const {data,error}=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name}}});
   if(error){toast(error.message,'e');btn.disabled=false;btn.textContent='Criar acesso';return;}
+
   if(data?.user){
+    // Confirma o email automaticamente via SQL
+    await sb.rpc('confirm_user_email', {user_id: data.user.id}).catch(()=>{});
+
+    // Salva o perfil
     await sb.from('profiles').upsert({
       id:data.user.id,email,full_name:name,
       phone:document.getElementById('nm-phone').value.trim(),
@@ -739,7 +746,7 @@ async function createMember() {
     });
   }
   closeModal(); renderAdmin();
-  toast('Membro criado! Email de confirmação enviado.');
+  toast('Membro criado! Acesso liberado.');
 }
 
 // ═══════════════════════════════════════════
