@@ -261,7 +261,14 @@ const SUPABASE_URL  = 'https://pdxhstqqnctpjinytyay.supabase.co';
 const SUPABASE_KEY  = 'sb_publishable_mWe0nmh5J29pGcwhxFdfzA_AEY_OwKB';
 const ADMIN_EMAIL   = 'contatovictoravelino@gmail.com';
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    storage: window.localStorage,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'implicit'
+  }
+});
 
 // ═══════════════════════════════════════════
 //  ESTADO
