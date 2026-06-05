@@ -526,11 +526,20 @@ async function showApp() {
   // Check if blocked (skip for admin)
   if (!isAdmin) {
     try {
-      const { data: profile } = await sb.from('profiles').select('blocked').eq('id', currentUser.id).single();
+      const { data: profile } = await sb.from('profiles').select('blocked,active,expires_at').eq('id', currentUser.id).single();
       if (profile?.blocked) {
         document.getElementById('app-screen').classList.add('hidden');
         document.getElementById('register-screen').classList.add('hidden');
-        if (!profile?.active) { document.getElementById('pending-screen').classList.remove('hidden'); } else { document.getElementById('blocked-screen').classList.remove('hidden'); }
+        // Verifica se é inadimplente (tinha acesso antes mas venceu) ou pendente (nunca foi aprovado)
+        const isExpired = profile?.expires_at && new Date(profile.expires_at) < new Date();
+        const wasApproved = profile?.active === false && profile?.expires_at; // já teve acesso
+        if (!profile?.active && !profile?.expires_at) {
+          // Nunca foi aprovado — pendente
+          document.getElementById('pending-screen').classList.remove('hidden');
+        } else {
+          // Já teve acesso mas foi bloqueado/expirou — inadimplente
+          document.getElementById('blocked-screen').classList.remove('hidden');
+        }
         return;
       }
     } catch(e) {}
