@@ -494,19 +494,17 @@ async function doRegister() {
   if (pw !== pw2) { errEl.textContent='As senhas não coincidem.'; errEl.classList.remove('hidden'); return; }
   btn.disabled=true; btn.textContent='Criando...';
 
-  // Cria conta: tenta signUp, se falhar por rate limit faz login direto
-  let userId = null;
-
-  // 1) Tenta signUp
+  // Passo 1: tenta criar a conta
   const {data: signUpData, error: signUpErr} = await sb.auth.signUp({
     email, password: pw,
     options: { data: { full_name: name } }
   });
 
-  const isEmailErr = signUpErr?.message?.toLowerCase().includes('rate')
-    || signUpErr?.message?.toLowerCase().includes('email')
-    || signUpErr?.message?.toLowerCase().includes('sending')
-    || signUpErr?.message?.toLowerCase().includes('smtp');
+  // Erro real (não é rate limit de email)
+  const isEmailErr = !signUpErr || signUpErr.message?.toLowerCase().includes('rate')
+    || signUpErr.message?.toLowerCase().includes('email')
+    || signUpErr.message?.toLowerCase().includes('sending')
+    || signUpErr.message?.toLowerCase().includes('smtp');
 
   if (signUpErr && !isEmailErr) {
     if (signUpErr.message.toLowerCase().includes('already')) {
@@ -518,41 +516,37 @@ async function doRegister() {
     btn.disabled=false; btn.textContent='Criar conta'; return;
   }
 
-  userId = signUpData?.user?.id;
+  // Passo 2: faz login para pegar o userId real (funciona mesmo com rate limit de email)
+  await new Promise(r => setTimeout(r, 1000));
+  const {data: loginData, error: loginErr} = await sb.auth.signInWithPassword({email, password: pw});
 
-  // 2) Se não veio userId (rate limit bloqueou), faz login pra pegar o ID
-  if (!userId) {
-    await new Promise(r => setTimeout(r, 1500));
-    const {data: loginData} = await sb.auth.signInWithPassword({email, password: pw}).catch(()=>({data:null}));
-    userId = loginData?.user?.id;
-    if (userId) await sb.auth.signOut().catch(()=>{});
+  if (loginErr || !loginData?.user?.id) {
+    // Conta criada mas login falhou — mostra mensagem de aguardar
+    okEl.classList.remove('hidden');
+    btn.disabled=true; btn.textContent='Conta criada!';
+    return;
   }
 
-  // 3) Salva perfil — usa fetch direto com anon key para garantir o insert
-  if (userId) {
-    const SURL = 'https://pdxhstqqnctpjinytyay.supabase.co';
-    const SKEY = 'sb_publishable_mWe0nmh5J29pGcwhxFdfzA_AEY_OwKB';
-    await fetch(`${SURL}/rest/v1/profiles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SKEY,
-        'Authorization': `Bearer ${SKEY}`,
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({id: userId, email, full_name: name, active: false, blocked: true, plan: 'monthly'})
-    }).catch(()=>{});
-    // Também tenta via SDK
-    await sb.from('profiles').upsert({id: userId, email, full_name: name, active: false, blocked: true, plan: 'monthly'}).catch(()=>{});
-  }
+  const userId = loginData.user.id;
+
+  // Passo 3: salva o perfil com o userId real
+  await sb.from('profiles').upsert({
+    id: userId,
+    email,
+    full_name: name,
+    active: false,
+    blocked: true,
+    plan: 'monthly'
+  });
+
+  // Passo 4: desloga (aguarda aprovação do admin)
+  await sb.auth.signOut();
 
   okEl.classList.remove('hidden');
   btn.disabled=true; btn.textContent='Conta criada!';
 }
 
-function showLogin()  { document.getElementById('loading-screen').classList.add('hidden'); document.getElementById('login-screen').style.display='flex'; document.getElementById('reset-screen').classList.add('hidden'); document.getElementById('register-screen').classList.add('hidden'); document.getElementById('pending-screen').classList.add('hidden'); document.getElementById('app-screen').classList.add('hidden'); }
-function showReset()  { document.getElementById('login-screen').style.display='none'; document.getElementById('reset-screen').classList.remove('hidden'); }
-function showLogin_() { document.getElementById('reset-screen').classList.add('hidden'); document.getElementById('login-screen').style.display='flex'; }
+
 async function showApp() {
   document.getElementById('loading-screen').classList.add('hidden');
   document.getElementById('login-screen').style.display='none';
