@@ -494,46 +494,44 @@ async function doRegister() {
   if (pw !== pw2) { errEl.textContent='As senhas não coincidem.'; errEl.classList.remove('hidden'); return; }
   btn.disabled=true; btn.textContent='Criando...';
 
-  // Usa Admin API — cria usuário já confirmado, SEM enviar email nenhum
-  const SUPABASE_URL = 'https://bsfbwgylyqbmohcrdicz.supabase.co';
-  const SERVICE_KEY  = 'sbsecret-a0oYjpdKMOlswp2auCA_Gk9uAHSX';
-
+  // Cria conta via signUp — ignora erro de email, salva perfil garantido
   let userId = null;
-  try {
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SERVICE_KEY,
-        'Authorization': `Bearer ${SERVICE_KEY}`
-      },
-      body: JSON.stringify({
-        email,
-        password: pw,
-        email_confirm: true,
-        user_metadata: { full_name: name }
-      })
-    });
-    const result = await res.json();
-    if (result.error || result.msg) {
-      const msg = result.error || result.msg || '';
-      if (msg.toLowerCase().includes('already')) {
-        errEl.textContent = 'Este email já está cadastrado. Faça login.';
-      } else {
-        errEl.textContent = msg || 'Erro ao criar conta.';
-      }
-      errEl.classList.remove('hidden');
-      btn.disabled=false; btn.textContent='Criar conta'; return;
+
+  const {data, error} = await sb.auth.signUp({
+    email, password: pw,
+    options: { data: { full_name: name } }
+  });
+
+  const isEmailErr = error?.message?.toLowerCase().includes('rate')
+    || error?.message?.toLowerCase().includes('email')
+    || error?.message?.toLowerCase().includes('sending')
+    || error?.message?.toLowerCase().includes('smtp');
+
+  if (error && !isEmailErr) {
+    if (error.message.toLowerCase().includes('already')) {
+      errEl.textContent = 'Este email já está cadastrado. Faça login.';
+    } else {
+      errEl.textContent = error.message;
     }
-    userId = result.id;
-  } catch(e) {
-    errEl.textContent = 'Erro de conexão. Tente novamente.';
     errEl.classList.remove('hidden');
     btn.disabled=false; btn.textContent='Criar conta'; return;
   }
 
+  // Tenta pegar userId do signUp ou buscando na tabela
+  userId = data?.user?.id;
+
+  if (!userId) {
+    await new Promise(r => setTimeout(r, 2000));
+    const {data: signinData} = await sb.auth.signInWithPassword({email, password: pw}).catch(()=>({data:null}));
+    userId = signinData?.user?.id;
+    if (userId) await sb.auth.signOut().catch(()=>{});
+  }
+
   if (userId) {
-    await sb.from('profiles').upsert({id:userId, email, full_name:name, active:false, blocked:true, plan:'monthly'}).catch(()=>{});
+    await sb.from('profiles').upsert({
+      id: userId, email, full_name: name,
+      active: false, blocked: true, plan: 'monthly'
+    });
   }
 
   okEl.classList.remove('hidden');
