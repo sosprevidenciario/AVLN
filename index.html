@@ -494,44 +494,56 @@ async function doRegister() {
   if (pw !== pw2) { errEl.textContent='As senhas não coincidem.'; errEl.classList.remove('hidden'); return; }
   btn.disabled=true; btn.textContent='Criando...';
 
-  // Cria conta via signUp — ignora erro de email, salva perfil garantido
+  // Cria conta: tenta signUp, se falhar por rate limit faz login direto
   let userId = null;
 
-  const {data, error} = await sb.auth.signUp({
+  // 1) Tenta signUp
+  const {data: signUpData, error: signUpErr} = await sb.auth.signUp({
     email, password: pw,
     options: { data: { full_name: name } }
   });
 
-  const isEmailErr = error?.message?.toLowerCase().includes('rate')
-    || error?.message?.toLowerCase().includes('email')
-    || error?.message?.toLowerCase().includes('sending')
-    || error?.message?.toLowerCase().includes('smtp');
+  const isEmailErr = signUpErr?.message?.toLowerCase().includes('rate')
+    || signUpErr?.message?.toLowerCase().includes('email')
+    || signUpErr?.message?.toLowerCase().includes('sending')
+    || signUpErr?.message?.toLowerCase().includes('smtp');
 
-  if (error && !isEmailErr) {
-    if (error.message.toLowerCase().includes('already')) {
+  if (signUpErr && !isEmailErr) {
+    if (signUpErr.message.toLowerCase().includes('already')) {
       errEl.textContent = 'Este email já está cadastrado. Faça login.';
     } else {
-      errEl.textContent = error.message;
+      errEl.textContent = signUpErr.message;
     }
     errEl.classList.remove('hidden');
     btn.disabled=false; btn.textContent='Criar conta'; return;
   }
 
-  // Tenta pegar userId do signUp ou buscando na tabela
-  userId = data?.user?.id;
+  userId = signUpData?.user?.id;
 
+  // 2) Se não veio userId (rate limit bloqueou), faz login pra pegar o ID
   if (!userId) {
-    await new Promise(r => setTimeout(r, 2000));
-    const {data: signinData} = await sb.auth.signInWithPassword({email, password: pw}).catch(()=>({data:null}));
-    userId = signinData?.user?.id;
+    await new Promise(r => setTimeout(r, 1500));
+    const {data: loginData} = await sb.auth.signInWithPassword({email, password: pw}).catch(()=>({data:null}));
+    userId = loginData?.user?.id;
     if (userId) await sb.auth.signOut().catch(()=>{});
   }
 
+  // 3) Salva perfil — usa fetch direto com anon key para garantir o insert
   if (userId) {
-    await sb.from('profiles').upsert({
-      id: userId, email, full_name: name,
-      active: false, blocked: true, plan: 'monthly'
-    });
+    const SURL = 'https://pdxhstqqnctpjinytyay.supabase.co';
+    const SKEY = 'sb_publishable_mWe0nmh5J29pGcwhxFdfzA_AEY_OwKB';
+    await fetch(`${SURL}/rest/v1/profiles`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SKEY,
+        'Authorization': `Bearer ${SKEY}`,
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({id: userId, email, full_name: name, active: false, blocked: true, plan: 'monthly'})
+    }).catch(()=>{});
+    // Também tenta via SDK
+    await sb.from('profiles').upsert({id: userId, email, full_name: name, active: false, blocked: true, plan: 'monthly'}).catch(()=>{});
   }
 
   okEl.classList.remove('hidden');
