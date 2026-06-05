@@ -820,10 +820,10 @@ async function renderAdmin(q='') {
       <button class="btn btn-green" onclick="openAddMember()"><i class="ti ti-user-plus"></i> Novo membro</button>
     </div>
     <div class="metrics cols4">
-      <div class="metric"><div class="metric-lbl">Ativos</div><div class="metric-val green">${ativos}</div><div class="metric-sub">${list.length} total</div></div>
-      <div class="metric"><div class="metric-lbl">Anuais</div><div class="metric-val">${ann}</div><div class="metric-sub up">R$ ${(ann*997).toLocaleString('pt-BR')} ARR</div></div>
-      <div class="metric"><div class="metric-lbl">Mensais</div><div class="metric-val">${mon}</div><div class="metric-sub up">R$ ${(mon*97).toLocaleString('pt-BR')} MRR</div></div>
-      <div class="metric"><div class="metric-lbl">Inadimplentes</div><div class="metric-val" style="color:#f44336">${inadimplentes.length}</div><div class="metric-sub"></div></div>
+      <div class="metric" onclick="filtrarAdmin('ativos')" style="cursor:pointer;" title="Ver ativos"><div class="metric-lbl">Ativos</div><div class="metric-val green">${ativos}</div><div class="metric-sub">${list.length} total</div></div>
+      <div class="metric" onclick="filtrarAdmin('anuais')" style="cursor:pointer;" title="Ver anuais"><div class="metric-lbl">Anuais</div><div class="metric-val">${ann}</div><div class="metric-sub up">R$ ${(ann*997).toLocaleString('pt-BR')} ARR</div></div>
+      <div class="metric" onclick="filtrarAdmin('mensais')" style="cursor:pointer;" title="Ver mensais"><div class="metric-lbl">Mensais</div><div class="metric-val">${mon}</div><div class="metric-sub up">R$ ${(mon*97).toLocaleString('pt-BR')} MRR</div></div>
+      <div class="metric" onclick="filtrarAdmin('inadimplentes')" style="cursor:pointer;" title="Ver inadimplentes"><div class="metric-lbl">Inadimplentes</div><div class="metric-val" style="color:#f44336">${inadimplentes.length}</div><div class="metric-sub"></div></div>
     </div>
     ${inadHtml}
     ${pendentesHtml}
@@ -843,6 +843,63 @@ async function aprovarMembro(id) {
   const venc = new Date(hoje.setMonth(hoje.getMonth()+1)).toISOString().split('T')[0];
   await sb.from('profiles').update({active: true, blocked: false, expires_at: venc}).eq('id', id);
   renderAdmin();
+}
+
+function filtrarAdmin(tipo) {
+  // Recarrega admin com filtro especial
+  renderAdminFiltro(tipo);
+}
+
+async function renderAdminFiltro(tipo) {
+  document.getElementById('page-admin').innerHTML=`<div class="wrap"><div class="loader" style="height:200px;"><div class="spinner-ring"></div></div></div>`;
+  const { data: members } = await sb.from('profiles').select('*').order('created_at', {ascending: false});
+  const list = members || [];
+
+  let titulo = '';
+  let filtrados = [];
+
+  if (tipo === 'ativos') {
+    titulo = '✅ ATIVOS';
+    filtrados = list.filter(m => !m.blocked && m.active);
+  } else if (tipo === 'anuais') {
+    titulo = '📅 ANUAIS';
+    filtrados = list.filter(m => m.plan === 'annual' && !m.blocked && m.active);
+  } else if (tipo === 'mensais') {
+    titulo = '📅 MENSAIS';
+    filtrados = list.filter(m => m.plan === 'monthly' && !m.blocked && m.active);
+  } else if (tipo === 'inadimplentes') {
+    titulo = '🔴 INADIMPLENTES';
+    filtrados = list.filter(m => m.expires_at && new Date(m.expires_at) < new Date());
+  } else if (tipo === 'bloqueados') {
+    titulo = '🔒 BLOQUEADOS';
+    filtrados = list.filter(m => m.blocked);
+  }
+
+  const rows = filtrados.map(m => {
+    const initials=(m.full_name||m.email||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const expTxt=m.expires_at?new Date(m.expires_at).toLocaleDateString('pt-BR'):'—';
+    const phone = m.phone ? m.phone.replace(/\D/g,'') : '';
+    const wppBtn = phone ? `<a href="https://wa.me/55${phone}" target="_blank" class="btn btn-green" style="padding:4px 10px;font-size:11px;text-decoration:none;"><i class="ti ti-brand-whatsapp"></i></a>` : '';
+    return `<div class="tbl-row gcols6 clickable" onclick="openMemberModal('${m.id}')">
+      <div class="member-cell"><div class="avatar">${initials}</div><div><div class="member-name">${m.full_name||m.email||'—'}</div><div class="member-sub">${m.phone||''}</div></div></div>
+      <span><span class="badge ${m.plan==='annual'?'badge-annual':'badge-monthly'}">${m.plan==='annual'?'ANUAL':'MENSAL'}</span></span>
+      <span><span class="badge ${m.blocked?'err':m.active?'ok':'warn'}">${m.blocked?'Bloqueado':m.active?'Ativo':'Inativo'}</span></span>
+      <span class="text-sm">${m.email||'—'}</span>
+      <span class="text-sm">${expTxt}</span>
+      <div style="display:flex;gap:4px;">${wppBtn}<button class="btn btn-green" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();renovarMembro('${m.id}')"><i class="ti ti-refresh"></i> Renovar</button></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('page-admin').innerHTML=`<div class="wrap">
+    <div class="hd">
+      <div><div class="hd-lbl">Filtro</div><div class="hd-title">${titulo} (${filtrados.length})</div></div>
+      <button class="btn btn-outline" onclick="renderAdmin()"><i class="ti ti-arrow-left"></i> Voltar</button>
+    </div>
+    <div class="tbl">
+      <div class="tbl-head gcols6"><span>Membro</span><span>Plano</span><span>Status</span><span>Email</span><span>Vencimento</span><span>Ação</span></div>
+      ${rows || '<div class="empty">Nenhum membro nessa categoria.</div>'}
+    </div>
+  </div>`;
 }
 
 async function renovarMembro(id) {
