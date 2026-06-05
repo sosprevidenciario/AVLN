@@ -265,8 +265,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     storage: window.localStorage,
     persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'implicit'
+    detectSessionInUrl: false,
+    autoRefreshToken: true,
+    storageKey: 'avln-auth'
   }
 });
 
@@ -277,7 +278,7 @@ let currentUser = null;
 let isAdmin = false;
 let modules = [];
 let videos  = [];
-let progress = {}; // { video_id: pct }
+let progress = {};
 let thumbPreviewData = '';
 const THUMB_COLORS = [
   'linear-gradient(135deg,#001a00,#003300)',
@@ -293,28 +294,22 @@ const THUMB_COLORS = [
 // ═══════════════════════════════════════════
 startMatrix();
 
-sb.auth.getSession().then(async ({ data: { session } }) => {
-  if (session) {
-    currentUser = session.user;
-    isAdmin = currentUser.email === ADMIN_EMAIL;
-    await loadData();
-    showApp();
-  } else {
+async function initAuth() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session && session.user) {
+      currentUser = session.user;
+      isAdmin = currentUser.email === ADMIN_EMAIL;
+      await loadData();
+      showApp();
+    } else {
+      showLogin();
+    }
+  } catch(e) {
     showLogin();
   }
-});
-
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN' && session) {
-    currentUser = session.user;
-    isAdmin = currentUser.email === ADMIN_EMAIL;
-    await loadData();
-    showApp();
-  }
-  if (event === 'SIGNED_OUT') {
-    showLogin();
-  }
-});
+}
+initAuth();
 
 // ═══════════════════════════════════════════
 //  DATA
@@ -347,14 +342,24 @@ async function doLogin() {
   errEl.classList.add('hidden');
   if (!email || !pw) { errEl.textContent = 'Preencha email e senha.'; errEl.classList.remove('hidden'); return; }
   btn.disabled = true; btn.textContent = 'Entrando...';
-  const { error } = await sb.auth.signInWithPassword({ email, password: pw });
-  btn.disabled = false; btn.textContent = 'Entrar';
-  if (error) { errEl.textContent = 'Email ou senha incorretos.'; errEl.classList.remove('hidden'); }
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+    if (error) throw error;
+    currentUser = data.user;
+    isAdmin = currentUser.email === ADMIN_EMAIL;
+    await loadData();
+    showApp();
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Entrar';
+    errEl.textContent = 'Email ou senha incorretos.'; errEl.classList.remove('hidden');
+  }
 }
 document.getElementById('li-pw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
 async function doLogout() {
   await sb.auth.signOut();
+  currentUser = null; isAdmin = false;
+  showLogin();
 }
 
 async function doReset() {
