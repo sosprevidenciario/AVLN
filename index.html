@@ -215,7 +215,16 @@ nav{display:flex;align-items:center;height:56px;padding:0 24px;background:rgba(1
         <input class="inp" id="reg-email" type="email" placeholder="seu@email.com">
       </div>
       <div class="form-row"><label class="lbl">Senha</label>
-        <input class="inp" id="reg-pw" type="password" placeholder="Mínimo 6 caracteres">
+        <div style="position:relative;">
+          <input class="inp" id="reg-pw" type="password" placeholder="Mínimo 6 caracteres" style="padding-right:44px;">
+          <button type="button" onclick="togglePw('reg-pw','reg-eye')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);"><i class="ti ti-eye" id="reg-eye"></i></button>
+        </div>
+      </div>
+      <div class="form-row"><label class="lbl">Confirmar senha</label>
+        <div style="position:relative;">
+          <input class="inp" id="reg-pw2" type="password" placeholder="Repita a senha" style="padding-right:44px;">
+          <button type="button" onclick="togglePw('reg-pw2','reg-eye2')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);"><i class="ti ti-eye" id="reg-eye2"></i></button>
+        </div>
       </div>
       <button class="btn-full btn-login-green" id="btn-register" onclick="doRegister()">Criar conta</button>
       <div style="text-align:center;margin-top:12px;">
@@ -456,16 +465,25 @@ function showRegister() {
   document.getElementById('reg-ok').classList.add('hidden');
 }
 
+function togglePw(inputId, eyeId) {
+  const inp = document.getElementById(inputId);
+  const eye = document.getElementById(eyeId);
+  if (inp.type === 'password') { inp.type = 'text'; eye.className = 'ti ti-eye-off'; }
+  else { inp.type = 'password'; eye.className = 'ti ti-eye'; }
+}
+
 async function doRegister() {
   const name  = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const pw    = document.getElementById('reg-pw').value;
+  const pw2   = document.getElementById('reg-pw2').value;
   const errEl = document.getElementById('reg-err');
   const okEl  = document.getElementById('reg-ok');
   const btn   = document.getElementById('btn-register');
   errEl.classList.add('hidden'); okEl.classList.add('hidden');
-  if (!name||!email||!pw) { errEl.textContent='Preencha todos os campos.'; errEl.classList.remove('hidden'); return; }
+  if (!name||!email||!pw||!pw2) { errEl.textContent='Preencha todos os campos.'; errEl.classList.remove('hidden'); return; }
   if (pw.length<6) { errEl.textContent='Senha deve ter pelo menos 6 caracteres.'; errEl.classList.remove('hidden'); return; }
+  if (pw !== pw2) { errEl.textContent='As senhas não coincidem.'; errEl.classList.remove('hidden'); return; }
   btn.disabled=true; btn.textContent='Criando...';
   const {data,error} = await sb.auth.signUp({email, password:pw, options:{data:{full_name:name}}});
   if (error) { errEl.textContent=error.message; errEl.classList.remove('hidden'); btn.disabled=false; btn.textContent='Criar conta'; return; }
@@ -1057,6 +1075,41 @@ async function deleteVideo(vid) {
   if(!confirm('Excluir esta aula?')) return;
   await sb.from('videos').delete().eq('id',vid);
   closeModal(); await loadData(); toast('Aula excluída.'); renderUpload();
+}
+
+
+function openResetPw(id) {
+  closeModal();
+  setTimeout(() => {
+    openModal(`
+    <div class="modal-top"><div class="modal-title">Redefinir senha</div><button class="xbtn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">Digite a nova senha para este aluno.</div>
+      <div class="form-row"><label class="lbl">Nova senha</label>
+        <div style="position:relative;">
+          <input class="inp" id="rp-pw" type="password" placeholder="Mínimo 6 caracteres" style="padding-right:44px;">
+          <button type="button" onclick="togglePw('rp-pw','rp-eye')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);"><i class="ti ti-eye" id="rp-eye"></i></button>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-green" style="flex:1;" onclick="saveResetPw('${id}')">Salvar nova senha</button>
+        <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      </div>
+    </div>`);
+  }, 100);
+}
+
+async function saveResetPw(id) {
+  const pw = document.getElementById('rp-pw').value;
+  if (!pw || pw.length < 6) { toast('Senha deve ter pelo menos 6 caracteres', 'e'); return; }
+  const { error } = await sb.rpc('admin_update_user_password', { user_id: id, new_password: pw }).catch(() => ({ error: true }));
+  if (error) {
+    // fallback: update via auth admin
+    toast('Use o Supabase para alterar a senha deste usuário', 'e');
+    return;
+  }
+  closeModal(); toast('Senha atualizada!');
 }
 
 // ═══════════════════════════════════════════
