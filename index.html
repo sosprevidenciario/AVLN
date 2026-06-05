@@ -743,13 +743,43 @@ async function markDone(videoId) {
 // ═══════════════════════════════════════════
 async function renderAdmin(q='') {
   document.getElementById('page-admin').innerHTML=`<div class="wrap"><div class="loader" style="height:200px;"><div class="spinner-ring"></div></div></div>`;
-  const { data: members } = await sb.from('profiles').select('*').order('full_name');
+  const { data: members } = await sb.from('profiles').select('*').order('created_at', {ascending: false});
   const list = members || [];
-  const filtered=q?list.filter(m=>(m.full_name||'').toLowerCase().includes(q.toLowerCase())||m.email.toLowerCase().includes(q.toLowerCase())||(m.phone||'').includes(q)):list;
-  const ann=list.filter(m=>m.plan==='annual').length;
-  const mon=list.filter(m=>m.plan==='monthly').length;
+
+  // Separa pendentes (blocked=true e active=false = novo cadastro aguardando aprovação)
+  const pendentes = list.filter(m => m.blocked && !m.active);
+  // Ativos e bloqueados (clientes já aprovados alguma vez)
+  const outros = list.filter(m => !(m.blocked && !m.active));
+  const filtered = q ? outros.filter(m=>(m.full_name||'').toLowerCase().includes(q.toLowerCase())||m.email.toLowerCase().includes(q.toLowerCase())||(m.phone||'').includes(q)) : outros;
+
+  const ann=list.filter(m=>m.plan==='annual'&&m.active&&!m.blocked).length;
+  const mon=list.filter(m=>m.plan==='monthly'&&m.active&&!m.blocked).length;
   const ativos=list.filter(m=>!m.blocked&&m.active).length;
-  const bloq=list.filter(m=>m.blocked).length;
+
+  const pendentesHtml = pendentes.length > 0 ? `
+    <div style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:700;color:#ff9800;letter-spacing:1px;text-transform:uppercase;">⏳ Pendentes de Aprovação (${pendentes.length})</div>
+      </div>
+      <div class="tbl">
+        <div class="tbl-head gcols6"><span>Membro</span><span>Plano</span><span>Status</span><span>Email</span><span>Cadastro</span><span>Ação</span></div>
+        ${pendentes.map(m=>{
+          const initials=(m.full_name||m.email||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+          const dataCad=m.created_at?new Date(m.created_at).toLocaleDateString('pt-BR'):'—';
+          return `<div class="tbl-row gcols6 clickable" onclick="openMemberModal('${m.id}')" style="border-left:3px solid #ff9800;">
+            <div class="member-cell"><div class="avatar" style="background:linear-gradient(135deg,#ff9800,#e65100)">${initials}</div><div><div class="member-name">${m.full_name||'—'}</div><div class="member-sub">${m.phone||''}</div></div></div>
+            <span><span class="badge badge-monthly">MENSAL</span></span>
+            <span><span class="badge err">Pendente</span></span>
+            <span class="text-sm">${m.email||'—'}</span>
+            <span class="text-sm">${dataCad}</span>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-green" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();aprovarMembro('${m.id}')"><i class="ti ti-check"></i> Aprovar</button>
+              <button class="btn" style="padding:4px 10px;font-size:11px;background:var(--red);" onclick="event.stopPropagation();toggleBlock('${m.id}',false)"><i class="ti ti-x"></i> Rejeitar</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
 
   document.getElementById('page-admin').innerHTML=`<div class="wrap">
     <div class="hd"><div><div class="hd-lbl">Painel</div><div class="hd-title">Administração</div></div>
@@ -757,10 +787,11 @@ async function renderAdmin(q='') {
     </div>
     <div class="metrics cols4">
       <div class="metric"><div class="metric-lbl">Ativos</div><div class="metric-val green">${ativos}</div><div class="metric-sub">${list.length} total</div></div>
-      <div class="metric"><div class="metric-lbl">Anuais</div><div class="metric-val">${ann}</div><div class="metric-sub up">R$ ${(ann*627).toLocaleString('pt-BR')} ARR</div></div>
+      <div class="metric"><div class="metric-lbl">Anuais</div><div class="metric-val">${ann}</div><div class="metric-sub up">R$ ${(ann*997).toLocaleString('pt-BR')} ARR</div></div>
       <div class="metric"><div class="metric-lbl">Mensais</div><div class="metric-val">${mon}</div><div class="metric-sub up">R$ ${(mon*97).toLocaleString('pt-BR')} MRR</div></div>
-      <div class="metric"><div class="metric-lbl">Bloqueados</div><div class="metric-val red">${bloq}</div><div class="metric-sub"></div></div>
+      <div class="metric"><div class="metric-lbl">Pendentes</div><div class="metric-val" style="color:#ff9800">${pendentes.length}</div><div class="metric-sub"></div></div>
     </div>
+    ${pendentesHtml}
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
       <input class="inp" style="width:220px;" placeholder="Buscar nome, email, tel..." value="${q}"
         oninput="clearTimeout(window._ast);window._ast=setTimeout(()=>renderAdmin(this.value),300)">
@@ -770,6 +801,13 @@ async function renderAdmin(q='') {
       ${renderMembersRows(filtered)}
     </div>
   </div>`;
+}
+
+async function aprovarMembro(id) {
+  const hoje = new Date();
+  const venc = new Date(hoje.setMonth(hoje.getMonth()+1)).toISOString().split('T')[0];
+  await sb.from('profiles').update({active: true, blocked: false, expires_at: venc}).eq('id', id);
+  renderAdmin();
 }
 
 function memberStatus(m) {
