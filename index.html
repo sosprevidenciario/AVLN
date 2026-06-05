@@ -217,13 +217,13 @@ nav{display:flex;align-items:center;height:56px;padding:0 24px;background:rgba(1
       <div class="form-row"><label class="lbl">Senha</label>
         <div style="position:relative;">
           <input class="inp" id="reg-pw" type="password" placeholder="Mínimo 6 caracteres" style="padding-right:44px;">
-          <button type="button" onclick="togglePw('reg-pw','reg-eye')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:0.5;" id="reg-eye">👁</button>
+          <button type="button" onclick="togglePw('reg-pw','reg-eye')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:0.5;" id="reg-eye"><i class="ti ti-eye"></i></button>
         </div>
       </div>
       <div class="form-row"><label class="lbl">Confirmar senha</label>
         <div style="position:relative;">
           <input class="inp" id="reg-pw2" type="password" placeholder="Repita a senha" style="padding-right:44px;">
-          <button type="button" onclick="togglePw('reg-pw2','reg-eye2')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:0.5;" id="reg-eye2">👁</button>
+          <button type="button" onclick="togglePw('reg-pw2','reg-eye2')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:0.5;" id="reg-eye2"><i class="ti ti-eye"></i></button>
         </div>
       </div>
       <button class="btn-full btn-login-green" id="btn-register" onclick="doRegister()">Criar conta</button>
@@ -468,8 +468,16 @@ function showRegister() {
 function togglePw(inputId, eyeId) {
   const inp = document.getElementById(inputId);
   const eye = document.getElementById(eyeId);
-  if (inp.type === 'password') { inp.type = 'text'; eye.style.opacity='1'; }
-  else { inp.type = 'password'; eye.style.opacity='0.5'; }
+  const icon = eye.querySelector('i');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    if(icon){ icon.className='ti ti-eye-off'; }
+    eye.style.opacity='1';
+  } else {
+    inp.type = 'password';
+    if(icon){ icon.className='ti ti-eye'; }
+    eye.style.opacity='0.5';
+  }
 }
 
 async function doRegister() {
@@ -1126,7 +1134,7 @@ function openResetPw(id) {
       <div class="form-row"><label class="lbl">Nova senha</label>
         <div style="position:relative;">
           <input class="inp" id="rp-pw" type="password" placeholder="Mínimo 6 caracteres" style="padding-right:44px;">
-          <button type="button" onclick="togglePw('rp-pw','rp-eye')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:0.5;" id="rp-eye">👁</button>
+          <button type="button" onclick="togglePw('rp-pw','rp-eye')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:0.5;" id="rp-eye"><i class="ti ti-eye"></i></button>
         </div>
       </div>
       <div class="sep"></div>
