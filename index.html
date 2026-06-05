@@ -494,29 +494,18 @@ async function doRegister() {
   if (pw !== pw2) { errEl.textContent='As senhas não coincidem.'; errEl.classList.remove('hidden'); return; }
   btn.disabled=true; btn.textContent='Criando...';
 
-  // Cria conta via signUp do Supabase
-  const {data, error} = await sb.auth.signUp({
-    email, password: pw,
-    options: { data: { full_name: name } }
+  const { data, error } = await sb.rpc('create_user_and_profile', {
+    p_email: email,
+    p_password: pw,
+    p_full_name: name
   });
 
-  if (error && !error.message.toLowerCase().includes('rate') && !error.message.toLowerCase().includes('email') && !error.message.toLowerCase().includes('sending')) {
-    errEl.textContent = error.message.includes('already') ? 'Este email já está cadastrado.' : error.message;
+  if (error) {
+    errEl.textContent = error.message.includes('already') || error.message.includes('duplicate') 
+      ? 'Este email já está cadastrado. Faça login.' 
+      : 'Erro ao criar conta. Tente novamente.';
     errEl.classList.remove('hidden');
     btn.disabled=false; btn.textContent='Criar conta'; return;
-  }
-
-  // Faz login para pegar userId real
-  await new Promise(r => setTimeout(r, 1500));
-  const {data: loginData} = await sb.auth.signInWithPassword({email, password: pw}).catch(()=>({data:null}));
-  const userId = loginData?.user?.id || data?.user?.id;
-
-  if (userId) {
-    await sb.from('profiles').upsert({
-      id: userId, email, full_name: name,
-      active: false, blocked: true, plan: 'monthly'
-    });
-    await sb.auth.signOut();
   }
 
   okEl.classList.remove('hidden');
