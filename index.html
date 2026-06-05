@@ -1151,6 +1151,15 @@ function openEditVideo(vid) {
     <div class="form-row"><label class="lbl">Visibilidade</label>
       <select class="sel" id="ev-pub"><option value="1" ${v.published?'selected':''}>Publicado</option><option value="0" ${!v.published?'selected':''}>Rascunho</option></select>
     </div>
+    <div class="form-row"><label class="lbl">Foto de capa</label>
+      ${v.thumbnail_url ? `<img src="${v.thumbnail_url}" style="width:100%;max-height:160px;object-fit:cover;border-radius:4px;margin-bottom:8px;border:1px solid var(--border);">` : ''}
+      <div class="drop" onclick="document.getElementById('ev-thumb-inp').click()" style="height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;">
+        <i class="ti ti-photo" style="font-size:24px;color:var(--green);"></i>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">${v.thumbnail_url ? 'Trocar foto' : 'Adicionar foto'}</div>
+      </div>
+      <input type="file" id="ev-thumb-inp" accept="image/*" style="display:none" onchange="previewEditThumb(this)">
+      <img id="ev-thumb-preview" src="" style="display:none;width:100%;margin-top:8px;border-radius:4px;max-height:160px;object-fit:cover;border:1px solid var(--green);">
+    </div>
     <div class="sep"></div>
     <div style="display:flex;gap:8px;">
       <button class="btn btn-green" style="flex:1;" onclick="saveVideoEdit('${v.id}')">Salvar</button>
@@ -1161,7 +1170,15 @@ function openEditVideo(vid) {
 }
 
 async function saveVideoEdit(vid) {
-  const{error}=await sb.from('videos').update({
+  let thumbUrl = null;
+  const previewEl = document.getElementById('ev-thumb-preview');
+  if (previewEl && previewEl.style.display !== 'none' && previewEl.src) {
+    const blob = await (await fetch(previewEl.src)).blob();
+    const path = `thumbs/${Date.now()}.jpg`;
+    const {error:te} = await sb.storage.from('avln-content').upload(path, blob, {contentType:'image/jpeg'});
+    if (!te) { const {data:tu} = sb.storage.from('avln-content').getPublicUrl(path); thumbUrl = tu.publicUrl; }
+  }
+  const updateData = {
     title:document.getElementById('ev-title').value.trim(),
     description:document.getElementById('ev-desc').value.trim(),
     video_url:document.getElementById('ev-url').value.trim(),
@@ -1169,9 +1186,22 @@ async function saveVideoEdit(vid) {
     order_index:parseInt(document.getElementById('ev-order').value)||1,
     duration:document.getElementById('ev-dur').value.trim(),
     published:document.getElementById('ev-pub').value==='1',
-  }).eq('id',vid);
+  };
+  if (thumbUrl) updateData.thumbnail_url = thumbUrl;
+  const{error}=await sb.from('videos').update(updateData).eq('id',vid);
   if(error){toast('Erro: '+error.message,'e');return;}
   closeModal(); await loadData(); toast('Aula atualizada!'); renderUpload();
+}
+
+function previewEditThumb(input) {
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('ev-thumb-preview');
+    prev.src = e.target.result;
+    prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
 }
 
 async function deleteVideo(vid) {
