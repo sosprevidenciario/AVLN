@@ -494,18 +494,42 @@ async function doRegister() {
   if (pw !== pw2) { errEl.textContent='As senhas não coincidem.'; errEl.classList.remove('hidden'); return; }
   btn.disabled=true; btn.textContent='Criando...';
 
-  const { data, error } = await sb.rpc('create_user_and_profile', {
-    p_email: email,
-    p_password: pw,
-    p_full_name: name
+  // Tenta criar via RPC (sem rate limit, senha correta)
+  const { data: rpcData, error: rpcErr } = await sb.rpc('create_user_and_profile', {
+    p_email: email, p_password: pw, p_full_name: name
   });
 
-  if (error) {
-    errEl.textContent = error.message.includes('already') || error.message.includes('duplicate') 
-      ? 'Este email já está cadastrado. Faça login.' 
-      : 'Erro ao criar conta. Tente novamente.';
+  if (!rpcErr) {
+    // RPC funcionou - mostra sucesso
+    okEl.classList.remove('hidden');
+    btn.disabled=true; btn.textContent='Conta criada!';
+    return;
+  }
+
+  // Se RPC falhou, tenta signUp normal
+  const {data, error} = await sb.auth.signUp({
+    email, password: pw,
+    options: { data: { full_name: name } }
+  });
+
+  if (error && !error.message.toLowerCase().includes('rate') 
+    && !error.message.toLowerCase().includes('email')
+    && !error.message.toLowerCase().includes('sending')) {
+    errEl.textContent = error.message.includes('already') 
+      ? 'Este email já está cadastrado.' : error.message;
     errEl.classList.remove('hidden');
     btn.disabled=false; btn.textContent='Criar conta'; return;
+  }
+
+  // Tenta login para pegar userId e salvar perfil
+  await new Promise(r => setTimeout(r, 2000));
+  const {data: ld} = await sb.auth.signInWithPassword({email, password: pw}).catch(()=>({data:null}));
+  if (ld?.user?.id) {
+    await sb.from('profiles').upsert({
+      id: ld.user.id, email, full_name: name,
+      active: false, blocked: true, plan: 'monthly'
+    });
+    await sb.auth.signOut();
   }
 
   okEl.classList.remove('hidden');
