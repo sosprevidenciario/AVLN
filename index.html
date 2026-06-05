@@ -294,20 +294,35 @@ const THUMB_COLORS = [
 // ═══════════════════════════════════════════
 startMatrix();
 
+// ═══════════════════════════════════════════
+//  INIT — checa sessão salva no localStorage
+// ═══════════════════════════════════════════
 async function initAuth() {
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session && session.user) {
-      currentUser = session.user;
-      isAdmin = currentUser.email === ADMIN_EMAIL;
-      await loadData();
-      showApp();
-    } else {
-      showLogin();
-    }
-  } catch(e) {
-    showLogin();
+  const saved = localStorage.getItem('avln-session');
+  if (saved) {
+    try {
+      const sess = JSON.parse(saved);
+      // Restaura sessão no Supabase
+      const { data, error } = await sb.auth.setSession({
+        access_token: sess.access_token,
+        refresh_token: sess.refresh_token
+      });
+      if (!error && data.user) {
+        currentUser = data.user;
+        isAdmin = currentUser.email === ADMIN_EMAIL;
+        // Salva token atualizado
+        localStorage.setItem('avln-session', JSON.stringify({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token
+        }));
+        await loadData();
+        showApp();
+        return;
+      }
+    } catch(e) {}
+    localStorage.removeItem('avln-session');
   }
+  showLogin();
 }
 initAuth();
 
@@ -345,6 +360,11 @@ async function doLogin() {
   try {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
     if (error) throw error;
+    // Salva sessão no localStorage para funcionar em todos os browsers
+    localStorage.setItem('avln-session', JSON.stringify({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token
+    }));
     currentUser = data.user;
     isAdmin = currentUser.email === ADMIN_EMAIL;
     await loadData();
@@ -357,6 +377,7 @@ async function doLogin() {
 document.getElementById('li-pw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
 async function doLogout() {
+  localStorage.removeItem('avln-session');
   await sb.auth.signOut();
   currentUser = null; isAdmin = false;
   showLogin();
