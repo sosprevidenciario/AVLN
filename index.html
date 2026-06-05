@@ -485,32 +485,45 @@ async function doRegister() {
   if (pw.length<6) { errEl.textContent='Senha deve ter pelo menos 6 caracteres.'; errEl.classList.remove('hidden'); return; }
   if (pw !== pw2) { errEl.textContent='As senhas não coincidem.'; errEl.classList.remove('hidden'); return; }
   btn.disabled=true; btn.textContent='Criando...';
-  const {data, error} = await sb.auth.signUp({email, password:pw, options:{data:{full_name:name}}});
 
-  // Ignora erro de rate limit de email — conta é criada mesmo assim
-  const isEmailError = error?.message?.toLowerCase().includes('rate') || error?.message?.toLowerCase().includes('email') || error?.message?.toLowerCase().includes('sending');
-  
-  if (error && !isEmailError) {
-    // Erro real (email já cadastrado, senha fraca, etc)
-    if (error.message.toLowerCase().includes('already')) {
-      errEl.textContent = 'Este email já está cadastrado. Faça login.';
-    } else {
-      errEl.textContent = error.message;
+  // Usa Admin API — cria usuário já confirmado, SEM enviar email nenhum
+  const SUPABASE_URL = 'https://bsfbwgylyqbmohcrdicz.supabase.co';
+  const SERVICE_KEY  = 'sbsecret-a0oYjpdKMOlswp2auCA_Gk9uAHSX';
+
+  let userId = null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SERVICE_KEY,
+        'Authorization': `Bearer ${SERVICE_KEY}`
+      },
+      body: JSON.stringify({
+        email,
+        password: pw,
+        email_confirm: true,
+        user_metadata: { full_name: name }
+      })
+    });
+    const result = await res.json();
+    if (result.error || result.msg) {
+      const msg = result.error || result.msg || '';
+      if (msg.toLowerCase().includes('already')) {
+        errEl.textContent = 'Este email já está cadastrado. Faça login.';
+      } else {
+        errEl.textContent = msg || 'Erro ao criar conta.';
+      }
+      errEl.classList.remove('hidden');
+      btn.disabled=false; btn.textContent='Criar conta'; return;
     }
+    userId = result.id;
+  } catch(e) {
+    errEl.textContent = 'Erro de conexão. Tente novamente.';
     errEl.classList.remove('hidden');
     btn.disabled=false; btn.textContent='Criar conta'; return;
   }
 
-  // Salva perfil — usa id do data.user se disponível, senão busca pelo email
-  let userId = data?.user?.id;
-  if (!userId) {
-    // Conta pode ter sido criada mas o email de confirmação deu erro
-    // Tenta buscar o usuário pelo email na tabela profiles ou aguarda
-    await new Promise(r => setTimeout(r, 1500));
-    const {data:found} = await sb.from('profiles').select('id').eq('email', email).single().catch(() => ({data:null}));
-    userId = found?.id;
-  }
-  
   if (userId) {
     await sb.from('profiles').upsert({id:userId, email, full_name:name, active:false, blocked:true, plan:'monthly'}).catch(()=>{});
   }
@@ -1234,3 +1247,4 @@ function startMatrix() {
 </script>
 </body>
 </html>
+
