@@ -494,53 +494,22 @@ async function doRegister() {
   if (pw !== pw2) { errEl.textContent='As senhas não coincidem.'; errEl.classList.remove('hidden'); return; }
   btn.disabled=true; btn.textContent='Criando...';
 
-  // Passo 1: tenta criar a conta
-  const {data: signUpData, error: signUpErr} = await sb.auth.signUp({
-    email, password: pw,
-    options: { data: { full_name: name } }
+  // Chama função SQL que cria o usuário direto no banco sem rate limit
+  const { data, error } = await sb.rpc('create_user_and_profile', {
+    p_email: email,
+    p_password: pw,
+    p_full_name: name
   });
 
-  // Erro real (não é rate limit de email)
-  const isEmailErr = !signUpErr || signUpErr.message?.toLowerCase().includes('rate')
-    || signUpErr.message?.toLowerCase().includes('email')
-    || signUpErr.message?.toLowerCase().includes('sending')
-    || signUpErr.message?.toLowerCase().includes('smtp');
-
-  if (signUpErr && !isEmailErr) {
-    if (signUpErr.message.toLowerCase().includes('already')) {
+  if (error) {
+    if (error.message.includes('already') || error.message.includes('duplicate')) {
       errEl.textContent = 'Este email já está cadastrado. Faça login.';
     } else {
-      errEl.textContent = signUpErr.message;
+      errEl.textContent = error.message || 'Erro ao criar conta.';
     }
     errEl.classList.remove('hidden');
     btn.disabled=false; btn.textContent='Criar conta'; return;
   }
-
-  // Passo 2: faz login para pegar o userId real (funciona mesmo com rate limit de email)
-  await new Promise(r => setTimeout(r, 1000));
-  const {data: loginData, error: loginErr} = await sb.auth.signInWithPassword({email, password: pw});
-
-  if (loginErr || !loginData?.user?.id) {
-    // Conta criada mas login falhou — mostra mensagem de aguardar
-    okEl.classList.remove('hidden');
-    btn.disabled=true; btn.textContent='Conta criada!';
-    return;
-  }
-
-  const userId = loginData.user.id;
-
-  // Passo 3: salva o perfil com o userId real
-  await sb.from('profiles').upsert({
-    id: userId,
-    email,
-    full_name: name,
-    active: false,
-    blocked: true,
-    plan: 'monthly'
-  });
-
-  // Passo 4: desloga (aguarda aprovação do admin)
-  await sb.auth.signOut();
 
   okEl.classList.remove('hidden');
   btn.disabled=true; btn.textContent='Conta criada!';
