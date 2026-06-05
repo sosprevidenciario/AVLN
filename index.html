@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AVLN — Área de Membros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0d0a;--bg2:#0e120e;--bg3:#131813;--bg4:#1a201a;
+  --green:#00ff41;--green2:#00cc33;--green3:#009922;
+  --green-dim:rgba(0,255,65,0.12);
+  --text:#ffffff;--text2:#aaaaaa;--text3:#555;
+  --border:rgba(0,255,65,0.12);--border2:rgba(0,255,65,0.25);
+  --red:#ff3333;--amber:#ffaa00;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.hidden{display:none!important;}
+
+/* ── NAV ── */
+nav{display:flex;align-items:center;height:56px;padding:0 24px;background:rgba(10,13,10,0.97);border-bottom:1px solid var(--border);gap:24px;position:sticky;top:0;z-index:200;backdrop-filter:blur(8px);}
+.logo{font-size:20px;font-weight:900;color:var(--green);letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 20px rgba(0,255,65,0.5);cursor:pointer;flex-shrink:0;}
+.nav-links{display:flex;flex:1;gap:2px;}
+.nl{padding:0 12px;height:56px;display:flex;align-items:center;font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:none;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .15s;}
+.nl:hover{color:var(--text2);}.nl.on{color:var(--green);border-bottom-color:var(--green);}
+.nl.adm.on{color:var(--amber);border-bottom-color:var(--amber);}
+.nav-r{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.nav-chip{font-size:9px;padding:2px 8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:rgba(0,255,65,0.1);color:var(--green);border:1px solid rgba(0,255,65,0.2);}
+.nav-chip.adm{background:rgba(255,170,0,0.1);color:var(--amber);border-color:rgba(255,170,0,0.2);}
+.av{width:32px;height:32px;background:var(--green-dim);border:1px solid var(--border2);font-size:11px;font-weight:700;color:var(--green);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0;}
+.av-menu{position:absolute;top:40px;right:0;background:var(--bg2);border:1px solid var(--border2);min-width:160px;display:none;z-index:300;}
+.av-menu.open{display:block;}
+.av-menu-item{display:block;padding:10px 14px;font-size:12px;color:var(--text2);cursor:pointer;border-bottom:1px solid var(--border);transition:color .1s;}
+.av-menu-item:last-child{border-bottom:none;}
+.av-menu-item:hover{color:var(--green);}
+.av-menu-item.danger{color:var(--red);}
+.av-menu-item.danger:hover{color:var(--red);}
+
+/* ── PAGES ── */
+.page{display:none;}.page.on{display:block;}
+
+/* ── LOGIN ── */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+#matrix-canvas{position:fixed;inset:0;opacity:.03;pointer-events:none;}
+.login-wrap{position:relative;z-index:10;width:100%;max-width:400px;padding:24px;}
+.login-logo{text-align:center;margin-bottom:36px;}
+.login-icon{font-size:52px;margin-bottom:10px;}
+.login-title{font-size:32px;font-weight:900;color:var(--green);letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,65,0.5);}
+.login-sub{font-size:10px;color:var(--text3);letter-spacing:3px;text-transform:uppercase;margin-top:6px;}
+.login-card{background:var(--bg2);border:1px solid var(--border2);padding:28px;}
+.lbl{display:block;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
+.inp{width:100%;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;}
+.inp:focus{border-color:var(--green);}
+.inp.err{border-color:var(--red);}
+.form-row{margin-bottom:16px;}
+.btn-full{width:100%;padding:13px;font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all .2s;margin-top:4px;}
+.btn-login-green{background:var(--green);color:#000;}.btn-login-green:hover{background:var(--green2);}
+.login-err{font-size:12px;color:var(--red);background:rgba(255,51,51,0.08);border:1px solid rgba(255,51,51,0.2);padding:10px 14px;margin-bottom:16px;}
+
+/* ── SHARED ── */
+.chip{font-size:10px;padding:2px 8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.chip.ok{background:rgba(0,255,65,0.1);color:var(--green);border:1px solid rgba(0,255,65,0.2);}
+.chip.warn{background:rgba(255,170,0,0.1);color:var(--amber);border:1px solid rgba(255,170,0,0.2);}
+.chip.err{background:rgba(255,51,51,0.1);color:var(--red);border:1px solid rgba(255,51,51,0.2);}
+.chip.plan-a{background:rgba(0,255,65,0.06);color:#666;border:1px solid var(--border);}
+.chip.plan-m{background:rgba(0,200,255,0.08);color:#4ac8ff;border:1px solid rgba(0,200,255,0.15);}
+.chip.mod{background:var(--green-dim);color:var(--green);border:1px solid var(--border2);font-size:9px;padding:2px 8px;}
+.wrap{padding:24px 28px;}
+.hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;}
+.hd-lbl{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.hd-title{font-size:22px;font-weight:800;}
+.sep{height:1px;background:var(--border);margin:16px 0;}
+.empty{padding:40px;text-align:center;color:var(--text3);font-size:13px;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.sel{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;}
+.sel:focus{border-color:var(--green);}
+.ta{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;resize:vertical;min-height:72px;outline:none;}
+.ta:focus{border-color:var(--green);}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 18px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'Inter',sans-serif;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.btn-green{background:var(--green);color:#000;}.btn-green:hover{background:var(--green2);}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2);}.btn-outline:hover{border-color:var(--green);color:var(--green);}
+.btn-danger{background:transparent;border:1px solid rgba(255,51,51,0.3);color:var(--red);}.btn-danger:hover{background:rgba(255,51,51,0.08);}
+.btn-unblock{background:transparent;border:1px solid rgba(0,255,65,0.3);color:var(--green);}.btn-unblock:hover{background:var(--green-dim);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── METRICS ── */
+.metrics{display:grid;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:24px;}
+.metrics.cols4{grid-template-columns:repeat(4,1fr);}
+.metrics.cols3{grid-template-columns:repeat(3,1fr);}
+.metric{background:var(--bg2);padding:18px;}
+.metric-val{font-size:30px;font-weight:800;line-height:1;margin-bottom:4px;}
+.metric-val.green{color:var(--green);text-shadow:0 0 12px rgba(0,255,65,0.3);}
+.metric-val.red{color:var(--red);}
+.metric-lbl{font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+.metric-sub{font-size:11px;color:var(--text3);}
+.metric-sub.up{color:var(--green);}
+
+/* ── TABLE ── */
+.tbl{border:1px solid var(--border);overflow:hidden;}
+.tbl-head{display:grid;padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;}
+.tbl-row{display:grid;padding:13px 16px;border-bottom:1px solid var(--border);align-items:center;transition:background .1s;}
+.tbl-row:last-child{border-bottom:none;}
+.tbl-row.clickable{cursor:pointer;}.tbl-row.clickable:hover{background:var(--bg3);}
+.gcols6{grid-template-columns:2fr .8fr .8fr .8fr 1.3fr .8fr;}
+.gcols4{grid-template-columns:2fr 1fr 1fr 1fr;}
+.m-av{width:28px;height:28px;background:var(--green-dim);border:1px solid var(--border2);font-size:10px;font-weight:700;color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.bar-w{height:3px;background:var(--bg4);width:70px;flex-shrink:0;}
+.bar-f{height:100%;background:var(--green);}
+
+/* ── PROGRESS BAR ── */
+.prog-bar{height:4px;background:var(--bg4);}
+.prog-bar-fill{height:100%;background:var(--green);transition:width .5s;}
+.prog-circle{position:relative;width:64px;height:64px;flex-shrink:0;}
+.prog-circle svg{transform:rotate(-90deg);}
+.prog-circle .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--green);}
+
+/* ── HERO ── */
+.hero{padding:32px 28px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:24px;background:radial-gradient(ellipse at 30% 50%, rgba(0,255,65,0.04) 0%, transparent 70%);}
+.hero-icon{font-size:56px;flex-shrink:0;}
+.hero-eyebrow{font-size:10px;color:var(--green);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+.hero-title{font-size:28px;font-weight:900;line-height:1.1;margin-bottom:4px;}
+.hero-title span{color:var(--green);}
+.hero-sub{font-size:13px;color:var(--text2);}
+.hero-right{margin-left:auto;}
+
+/* ── SECTION ── */
+.section{padding:24px 28px;}
+.section-title{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.scroll-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;}
+.scroll-row::-webkit-scrollbar{height:3px;}
+.scroll-row::-webkit-scrollbar-track{background:var(--bg3);}
+.scroll-row::-webkit-scrollbar-thumb{background:var(--green3);}
+
+/* ── VIDEO CARDS ── */
+.vcard{flex:0 0 180px;scroll-snap-align:start;cursor:pointer;border:1px solid var(--border);transition:all .2s;background:var(--bg2);flex-shrink:0;}
+.vcard:hover{border-color:var(--green2);transform:translateY(-2px);}
+.vcard.locked{cursor:default;opacity:.5;pointer-events:none;}
+.vthumb{height:108px;position:relative;overflow:hidden;background:var(--bg3);}
+.vthumb img{width:100%;height:100%;object-fit:cover;}
+.vthumb-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,13,10,0.9) 0%,transparent 60%);}
+.v-mod-badge{position:absolute;top:6px;left:6px;}
+.v-done{position:absolute;top:6px;right:6px;width:20px;height:20px;background:var(--green);display:flex;align-items:center;justify-content:center;}
+.vlock-overlay{position:absolute;inset:0;background:rgba(10,13,10,0.6);display:flex;align-items:center;justify-content:center;}
+.vinfo{padding:10px;}
+.vtitle{font-size:13px;font-weight:700;line-height:1.3;margin-bottom:4px;}
+.vdesc{font-size:11px;color:var(--text3);line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.vdur{font-size:10px;color:var(--text3);}
+.vpbar{height:2px;background:var(--bg4);margin-top:6px;overflow:hidden;}
+.vpfill{height:100%;background:var(--green);}
+
+/* ── PLAYER ── */
+.player-layout{display:grid;grid-template-columns:1fr 260px;min-height:calc(100vh - 56px);}
+.player-outer{background:#000;width:100%;aspect-ratio:16/9;max-height:65vh;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.player-outer iframe{width:100%;height:100%;border:none;position:absolute;inset:0;}
+.player-sidebar{border-left:1px solid var(--border);overflow-y:auto;max-height:calc(100vh - 56px);position:sticky;top:56px;}
+.sb-mod-head{padding:10px 14px;border-bottom:1px solid var(--border);font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;background:var(--bg3);position:sticky;top:0;}
+.sb-item{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;border-left:2px solid transparent;}
+.sb-item:hover{background:var(--bg3);}
+.sb-item.active{background:var(--bg3);border-left-color:var(--green);}
+.sb-item.locked{opacity:.4;cursor:default;pointer-events:none;}
+.si-num{font-size:10px;color:var(--text3);width:16px;text-align:right;flex-shrink:0;}
+.si-thumb{width:40px;height:26px;flex-shrink:0;overflow:hidden;background:var(--bg4);}
+.si-thumb img{width:100%;height:100%;object-fit:cover;}
+.si-title{flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;z-index:500;}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;}
+.modal-top{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1;}
+.modal-title{font-size:14px;font-weight:700;}
+.modal-body{padding:20px;}
+.xbtn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;line-height:1;padding:0 4px;}
+.xbtn:hover{color:var(--red);}
+
+/* ── UPLOAD AREA ── */
+.drop{border:1px dashed var(--border2);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;}
+.drop:hover{border-color:var(--green);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.s{background:var(--green);color:#000;}
+.toast.e{background:var(--red);color:#fff;}
+
+/* ── THUMBNAIL COLORS ── */
+.tc-colors{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.tc{width:40px;height:30px;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:8px;color:rgba(255,255,255,.2);font-weight:700;transition:border-color .15s;}
+.tc.sel{border-color:var(--green);}
+.tc:hover:not(.sel){border-color:rgba(0,255,65,.4);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .metrics.cols4{grid-template-columns:repeat(2,1fr);}
+  .gcols6{grid-template-columns:1fr 1fr;}
+  .player-layout{grid-template-columns:1fr;}
+  .player-sidebar{display:none;}
+  .two{grid-template-columns:1fr;}
+  .wrap{padding:16px;}
+  .hero{padding:20px 16px;}
+  .section{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div id="login-screen" class="login-screen">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="login-icon">🥷🏿</div>
+      <div class="login-title">AVLN</div>
+      <div class="login-sub">Área de membros</div>
+    </div>
+    <div class="login-card">
+      <div id="login-err" class="login-err hidden"></div>
+      <div class="form-row"><label class="lbl">Email</label>
+        <input class="inp" id="li-email" type="email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="form-row"><label class="lbl">Senha</label>
+        <input class="inp" id="li-pw" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-full btn-login-green" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app-screen" class="hidden">
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo" onclick="go('home')">AVLN</div>
+    <div class="nav-links" id="nav-links"></div>
+    <div class="nav-r">
+      <span id="nav-chip" class="nav-chip hidden"></span>
+      <div class="av" id="nav-av" onclick="toggleAvMenu()">
+        <span id="nav-initials">?</span>
+        <div class="av-menu" id="av-menu">
+          <span class="av-menu-item danger" onclick="doLogout()"><i class="ti ti-logout"></i> Sair</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGES -->
+  <div class="page on" id="page-home"></div>
+  <div class="page" id="page-aulas"></div>
+  <div class="page" id="page-progresso"></div>
+  <div class="page" id="page-player"></div>
+  <div class="page" id="page-admin"></div>
+  <div class="page" id="page-upload"></div>
+  <div class="page" id="page-modulos"></div>
+
+</div>
+
+<!-- ═══ MODALS ═══ -->
+<div id="modal" class="modal-overlay hidden">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ██████╗  █████╗ ████████╗ █████╗ ██████╗  █████╗ 
+//  ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗
+//  ██║  ██║███████║   ██║   ███████║██████╔╝███████║
+//  ██║  ██║██╔══██║   ██║   ██╔══██║██╔══██╗██╔══██║
+//  ██████╔╝██║  ██║   ██║   ██║  ██║██████╔╝██║  ██║
+//  ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝
+// ═══════════════════════════════════════════════════════
+
+// ── BANCO DE DADOS LOCAL (localStorage) ─────────────
+// Estrutura salva em: avln_db
+
+function getDB() {
+  const raw = localStorage.getItem('avln_db');
+  if (raw) return JSON.parse(raw);
+  // Banco inicial com admin + dados de exemplo
+  const db = {
+    users: [
+      {
+        id: 'admin',
+        email: 'admin@avln.com',       // ← TROQUE pelo seu email
+        password: 'admin123',          // ← TROQUE pela sua senha
+        name: 'Admin',
+        role: 'admin',
+        plan: 'annual',
+        active: true,
+        blocked: false,
+        expires: null,
+        phone: ''
+      }
+    ],
+    modules: [
+      { id: 'm1', title: 'Módulo 01 — Fundamentos', badge: 'MOD 01', order: 1 },
+      { id: 'm2', title: 'Módulo 02 — Estratégia',  badge: 'MOD 02', order: 2 },
+      { id: 'm3', title: 'Bônus',                   badge: 'BÔNUS',  order: 3 },
+    ],
+    videos: [
+      { id:'v1', moduleId:'m1', title:'Fundamentos do tráfego pago', desc:'Entenda como funciona o ecossistema de anúncios pagos.', url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumb:'', duration:'38min', order:1, published:true },
+      { id:'v2', moduleId:'m1', title:'Configurando o pixel',        desc:'Configure o pixel do Meta corretamente do zero.',        url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumb:'', duration:'27min', order:2, published:true },
+      { id:'v3', moduleId:'m1', title:'Públicos personalizados',     desc:'Crie públicos que realmente convertem.',                 url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumb:'', duration:'44min', order:3, published:true },
+      { id:'v4', moduleId:'m1', title:'Criativos que convertem',     desc:'O que faz um criativo parar o scroll.',                  url:'', thumb:'', duration:'51min', order:4, published:false },
+      { id:'v5', moduleId:'m2', title:'Funil de vendas completo',    desc:'Monte um funil lucrativo do topo ao fundo.',             url:'', thumb:'', duration:'58min', order:1, published:false },
+    ],
+    progress: {} // { userId: { videoId: pct } }
+  };
+  saveDB(db);
+  return db;
+}
+
+function saveDB(db) {
+  localStorage.setItem('avln_db', JSON.stringify(db));
+}
+
+// ── ESTADO ──────────────────────────────────────────
+let DB = getDB();
+let currentUser = null;
+let isAdmin = false;
+let currentVideoId = null;
+let selectedThumbColor = 0;
+const THUMB_COLORS = [
+  'linear-gradient(135deg,#001a00,#003300)',
+  'linear-gradient(135deg,#001008,#002015)',
+  'linear-gradient(135deg,#0a0d0a,#151a15)',
+  'linear-gradient(135deg,#0d1a00,#1a2e00)',
+  'linear-gradient(135deg,#001a0d,#002e1a)',
+  'linear-gradient(135deg,#001519,#002a2e)',
+];
+
+// ── INIT ─────────────────────────────────────────────
+(function init() {
+  // Matrix
+  startMatrix();
+  // Session
+  const sess = sessionStorage.getItem('avln_user');
+  if (sess) {
+    currentUser = JSON.parse(sess);
+    isAdmin = currentUser.role === 'admin';
+    showApp();
+  }
+})();
+
+// ── LOGIN / LOGOUT ───────────────────────────────────
+function doLogin() {
+  const email = document.getElementById('li-email').value.trim().toLowerCase();
+  const pw    = document.getElementById('li-pw').value;
+  const errEl = document.getElementById('login-err');
+  errEl.classList.add('hidden');
+
+  const u = DB.users.find(u => u.email.toLowerCase() === email && u.password === pw);
+  if (!u) { errEl.textContent = 'Email ou senha incorretos.'; errEl.classList.remove('hidden'); return; }
+  if (u.blocked) { errEl.textContent = 'Seu acesso está bloqueado. Contate o administrador.'; errEl.classList.remove('hidden'); return; }
+  if (!u.active) { errEl.textContent = 'Conta inativa.'; errEl.classList.remove('hidden'); return; }
+  // Check expiry (not for admin)
+  if (u.role !== 'admin' && u.expires && new Date(u.expires) < new Date()) {
+    errEl.textContent = 'Seu acesso expirou. Contate o administrador.'; errEl.classList.remove('hidden'); return;
+  }
+
+  currentUser = u;
+  isAdmin = u.role === 'admin';
+  sessionStorage.setItem('avln_user', JSON.stringify(u));
+  showApp();
+}
+document.getElementById('li-pw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogout() {
+  currentUser = null; isAdmin = false;
+  sessionStorage.removeItem('avln_user');
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('li-email').value = '';
+  document.getElementById('li-pw').value = '';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').classList.remove('hidden');
+  setupNav();
+  go('home');
+}
+
+// ── NAV ─────────────────────────────────────────────
+function setupNav() {
+  const initials = currentUser.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('nav-initials').textContent = initials;
+  const chip = document.getElementById('nav-chip');
+  if (isAdmin) { chip.textContent = 'Admin'; chip.classList.remove('hidden'); chip.className = 'nav-chip adm'; }
+  else { chip.classList.add('hidden'); }
+
+  document.getElementById('nav-links').innerHTML = `
+    <button class="nl on" onclick="go('home',this)">Início</button>
+    <button class="nl" onclick="go('aulas',this)">Aulas</button>
+    <button class="nl" onclick="go('progresso',this)">Progresso</button>
+    ${isAdmin ? `
+    <button class="nl adm" onclick="go('admin',this)">Admin</button>
+    <button class="nl adm" onclick="go('upload',this)">Upload</button>
+    <button class="nl adm" onclick="go('modulos',this)">Módulos</button>
+    ` : ''}`;
+}
+
+function go(id, btn) {
+  DB = getDB(); // Refresca dados sempre
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nl').forEach(n => n.classList.remove('on'));
+  document.getElementById('page-' + id)?.classList.add('on');
+  if (btn) btn.classList.add('on');
+  const map = { home:0, aulas:1, progresso:2, admin:3, upload:4, modulos:5, player:1 };
+  const tabs = document.querySelectorAll('.nl');
+  if (map[id] !== undefined && tabs[map[id]]) tabs[map[id]].classList.add('on');
+  closeAvMenu(); closeModal();
+  const renders = { home:renderHome, aulas:renderAulas, progresso:renderProgresso, admin:renderAdmin, upload:renderUpload, modulos:renderModulos };
+  if (renders[id]) renders[id]();
+}
+
+function toggleAvMenu() { document.getElementById('av-menu').classList.toggle('open'); }
+function closeAvMenu()  { document.getElementById('av-menu').classList.remove('open'); }
+document.addEventListener('click', e => { if (!e.target.closest('#nav-av')) closeAvMenu(); });
+
+// ── MODAL ────────────────────────────────────────────
+function openModal(html) {
+  document.getElementById('modal-box').innerHTML = html;
+  document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+
+// ── TOAST ────────────────────────────────────────────
+function toast(msg, type='s') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── HELPERS ─────────────────────────────────────────
+function getProgress(userId, videoId) {
+  return DB.progress[userId]?.[videoId] || 0;
+}
+function setProgress(userId, videoId, pct) {
+  if (!DB.progress[userId]) DB.progress[userId] = {};
+  DB.progress[userId][videoId] = pct;
+  saveDB(DB);
+}
+function totalPct(userId) {
+  const pubVids = DB.videos.filter(v => v.published);
+  if (!pubVids.length) return 0;
+  const done = pubVids.filter(v => getProgress(userId, v.id) === 100).length;
+  return Math.round((done / pubVids.length) * 100);
+}
+function progCircle(pct) {
+  const r=26, c=2*Math.PI*r, filled=c*(pct/100);
+  return `<svg width="64" height="64" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="${r}" fill="none" stroke="rgba(0,255,65,0.12)" stroke-width="4"/>
+    <circle cx="32" cy="32" r="${r}" fill="none" stroke="#00ff41" stroke-width="4"
+      stroke-dasharray="${filled} ${c}" stroke-linecap="round"/>
+  </svg>`;
+}
+function thumbDiv(v, h='100%') {
+  if (v.thumb) return `<img src="${v.thumb}" style="width:100%;height:${h};object-fit:cover;">`;
+  const bg = THUMB_COLORS[(v.order||0) % THUMB_COLORS.length];
+  return `<div style="width:100%;height:${h};background:${bg};display:flex;align-items:center;justify-content:center;"><span style="font-size:9px;font-weight:700;color:rgba(0,255,65,0.2);letter-spacing:2px;">AVLN</span></div>`;
+}
+function getMod(mid) { return DB.modules.find(m=>m.id===mid)||{title:'',badge:'MOD'}; }
+function uid() { return 'id' + Math.random().toString(36).slice(2,10); }
+function getYtId(url) {
+  return url.match(/(?:v=|youtu\.be\/|embed\/)([^&\n?#]+)/)?.[1] || null;
+}
+function getVimeoId(url) {
+  return url.match(/vimeo\.com\/(\d+)/)?.[1] || null;
+}
+function embedUrl(url) {
+  if (!url) return '';
+  const yt = getYtId(url);
+  if (yt) return `https://www.youtube.com/embed/${yt}?rel=0&modestbranding=1`;
+  const vm = getVimeoId(url);
+  if (vm) return `https://player.vimeo.com/video/${vm}?color=00ff41&title=0&byline=0`;
+  return url;
+}
+
+// ─── VIDEO CARD ──────────────────────────────────────
+function makeVCard(v, uid) {
+  const pct = Math.round(getProgress(uid, v.id));
+  const mod = getMod(v.moduleId);
+  return `<div class="vcard" onclick="openPlayer('${v.id}')">
+    <div class="vthumb">
+      ${thumbDiv(v)}
+      <div class="vthumb-overlay"></div>
+      <div class="v-mod-badge"><span class="chip mod">${mod.badge}</span></div>
+      ${pct===100?'<div class="v-done"><i class="ti ti-check" style="font-size:12px;color:#000;"></i></div>':''}
+    </div>
+    <div class="vinfo">
+      <div class="vtitle">${v.title}</div>
+      <div class="vdesc">${v.desc||''}</div>
+      <div class="vdur">${v.duration||''}</div>
+      <div class="vpbar"><div class="vpfill" style="width:${pct}%"></div></div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PÁGINAS — ALUNO
+// ═══════════════════════════════════════════════════════
+
+function renderHome() {
+  const uid = currentUser.id;
+  const pct = totalPct(uid);
+  const pubVids = DB.videos.filter(v => v.published);
+  const inProg = pubVids.filter(v => { const p = getProgress(uid,v.id); return p>0&&p<100; });
+  const nome = currentUser.name.split(' ')[0];
+
+  let html = `<div class="hero">
+    <div class="hero-icon">🥷🏿</div>
+    <div>
+      <div class="hero-eyebrow">Área de membros</div>
+      <div class="hero-title">Bem-vindo, <span>${nome}</span></div>
+      <div class="hero-sub">${inProg.length} em andamento · ${pubVids.filter(v=>getProgress(uid,v.id)===100).length} concluídas</div>
+    </div>
+    <div class="hero-right">
+      <div style="text-align:center;">
+        <div style="font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Progresso</div>
+        <div class="prog-circle">${progCircle(pct)}<div class="num">${pct}%</div></div>
+      </div>
+    </div>
+  </div>`;
+
+  if (inProg.length) {
+    html += `<div class="section"><div class="section-title">Continuar assistindo</div><div class="scroll-row">${inProg.map(v=>makeVCard(v,uid)).join('')}</div></div>`;
+  }
+
+  DB.modules.sort((a,b)=>a.order-b.order).forEach(mod => {
+    const mvids = pubVids.filter(v => v.moduleId === mod.id).sort((a,b)=>a.order-b.order);
+    if (!mvids.length) return;
+    html += `<div class="section"><div class="section-title">${mod.title} <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px;">${mvids.length} aulas</span></div><div class="scroll-row">${mvids.map(v=>makeVCard(v,uid)).join('')}</div></div>`;
+  });
+
+  document.getElementById('page-home').innerHTML = html;
+}
+
+function renderAulas(q='') {
+  const uid = currentUser.id;
+  const pubVids = DB.videos.filter(v => v.published);
+  const filtered = q ? pubVids.filter(v => v.title.toLowerCase().includes(q.toLowerCase()) || (v.desc||'').toLowerCase().includes(q.toLowerCase())) : pubVids;
+
+  let html = `<div class="wrap"><div class="hd">
+    <div><div class="hd-lbl">Biblioteca</div><div class="hd-title">Todas as aulas</div></div>
+    <input class="inp" style="width:200px;" placeholder="Buscar..." value="${q}"
+      oninput="clearTimeout(window._st);window._st=setTimeout(()=>renderAulas(this.value),300)">
+  </div>`;
+
+  if (q && !filtered.length) { html += `<div class="empty">Nenhuma aula encontrada para "${q}".</div>`; }
+
+  DB.modules.sort((a,b)=>a.order-b.order).forEach(mod => {
+    const mvids = filtered.filter(v => v.moduleId === mod.id).sort((a,b)=>a.order-b.order);
+    if (!mvids.length) return;
+    html += `<div style="margin-bottom:28px;"><div class="section-title">${mod.title}</div><div class="scroll-row">${mvids.map(v=>makeVCard(v,uid)).join('')}</div></div>`;
+  });
+
+  html += '</div>';
+  document.getElementById('page-aulas').innerHTML = html;
+}
+
+function renderProgresso() {
+  const uid = currentUser.id;
+  const pubVids = DB.videos.filter(v => v.published);
+  const watched = pubVids.filter(v => getProgress(uid,v.id) > 0);
+  const done = pubVids.filter(v => getProgress(uid,v.id) === 100).length;
+  const pct = totalPct(uid);
+
+  let mins = 0;
+  watched.forEach(v => {
+    const m = (v.duration||'').match(/(\d+)/);
+    if (m) mins += Math.round(parseInt(m[1]) * (getProgress(uid,v.id)/100));
+  });
+  const h = Math.floor(mins/60), min = mins%60;
+
+  let html = `<div class="wrap">
+    <div class="hd"><div><div class="hd-lbl">Evolução</div><div class="hd-title">Meu Progresso</div></div></div>
+    <div class="metrics cols3">
+      <div class="metric"><div class="metric-lbl">Concluídas</div><div class="metric-val green">${done}</div><div class="metric-sub">${pubVids.length} no total</div></div>
+      <div class="metric"><div class="metric-lbl">Geral</div><div class="metric-val green">${pct}%</div><div class="metric-sub">da trilha</div></div>
+      <div class="metric"><div class="metric-lbl">Tempo</div><div class="metric-val">${h}h ${min}m</div><div class="metric-sub">assistido</div></div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div class="lbl">Progresso geral</div>
+      <div class="prog-bar"><div class="prog-bar-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">${pct}%</div>
+    </div>`;
+
+  if (watched.length) {
+    html += `<div class="tbl">
+      <div class="tbl-head gcols4"><span>Aula</span><span>Módulo</span><span>Duração</span><span>Progresso</span></div>
+      ${watched.map(v => {
+        const p = Math.round(getProgress(uid,v.id));
+        const mod = getMod(v.moduleId);
+        return `<div class="tbl-row gcols4">
+          <div style="font-weight:600;font-size:13px;">${v.title}</div>
+          <div><span class="chip mod">${mod.badge}</span></div>
+          <div style="font-size:12px;color:var(--text2);">${v.duration||'—'}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="bar-w"><div class="bar-f" style="width:${p}%;background:${p===100?'var(--green)':'rgba(0,255,65,0.5)'};"></div></div>
+            <span style="font-size:11px;color:${p===100?'var(--green)':'var(--text2)'};">${p}%</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } else {
+    html += `<div class="empty">Você ainda não começou nenhuma aula.</div>`;
+  }
+
+  html += '</div>';
+  document.getElementById('page-progresso').innerHTML = html;
+}
+
+// ─── PLAYER ─────────────────────────────────────────
+function openPlayer(videoId) {
+  currentVideoId = videoId;
+  const v = DB.videos.find(x => x.id === videoId);
+  if (!v) return;
+  const uid = currentUser.id;
+  const mod = getMod(v.moduleId);
+  const allVids = DB.videos.filter(x => isAdmin ? true : x.published).sort((a,b)=>a.order-b.order);
+  const modVids = DB.videos.filter(x => x.moduleId === v.moduleId && (isAdmin || x.published)).sort((a,b)=>a.order-b.order);
+  const idx = modVids.findIndex(x => x.id === videoId);
+  const pct = Math.round(getProgress(uid, videoId));
+  const eUrl = embedUrl(v.url);
+
+  let playerContent = '';
+  if (eUrl) {
+    playerContent = `<iframe src="${eUrl}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+  } else {
+    playerContent = `<div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+      <i class="ti ti-video-off" style="font-size:40px;color:var(--text3);"></i>
+      <div style="font-size:12px;color:var(--text3);">Vídeo ainda não disponível</div>
+    </div>`;
+  }
+
+  // Sidebar with all modules
+  let sidebarHtml = '';
+  DB.modules.sort((a,b)=>a.order-b.order).forEach(m => {
+    const mvids = DB.videos.filter(x => x.moduleId === m.id && (isAdmin || x.published)).sort((a,b)=>a.order-b.order);
+    if (!mvids.length) return;
+    sidebarHtml += `<div class="sb-mod-head">${m.title}</div>`;
+    mvids.forEach((sv, i) => {
+      const sp = Math.round(getProgress(uid, sv.id));
+      sidebarHtml += `<div class="sb-item${sv.id===videoId?' active':''}" onclick="openPlayer('${sv.id}')">
+        <span class="si-num">${i+1}</span>
+        <div class="si-thumb">${thumbDiv(sv)}</div>
+        <div class="si-title" style="font-weight:${sv.id===videoId?700:400};color:${sv.id===videoId?'var(--text)':'var(--text2)'};">${sv.title}</div>
+        ${sp===100?'<i class="ti ti-check" style="font-size:11px;color:var(--green);flex-shrink:0;"></i>':''}
+      </div>`;
+    });
+  });
+
+  document.getElementById('page-player').innerHTML = `
+  <div class="player-layout">
+    <div>
+      <div class="player-outer">${playerContent}</div>
+      <div style="padding:20px 28px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:18px;font-weight:800;margin-bottom:4px;">${v.title}</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">${mod.title} · ${v.duration||''}</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.7;">${v.desc||''}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            ${idx>0?`<button class="btn btn-outline" onclick="openPlayer('${modVids[idx-1].id}')"><i class="ti ti-arrow-left"></i> Anterior</button>`:''}
+            ${idx<modVids.length-1?`<button class="btn btn-green" onclick="openPlayer('${modVids[idx+1].id}')">Próxima <i class="ti ti-arrow-right"></i></button>`:''}
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn ${pct===100?'btn-outline':'btn-green'}" onclick="markDone('${v.id}')">
+            <i class="ti ti-${pct===100?'check':'circle-check'}"></i>
+            ${pct===100?'Concluída ✓':'Marcar como concluída'}
+          </button>
+          ${isAdmin?`<button class="btn btn-outline" onclick="openEditVideo('${v.id}')"><i class="ti ti-edit"></i> Editar</button>`:''}
+        </div>
+      </div>
+    </div>
+    <div class="player-sidebar">${sidebarHtml}</div>
+  </div>`;
+
+  go('player');
+}
+
+function markDone(videoId) {
+  setProgress(currentUser.id, videoId, 100);
+  toast('Aula marcada como concluída! 🥷');
+  openPlayer(videoId);
+}
+
+// ═══════════════════════════════════════════════════════
+//  ADMIN — MEMBROS
+// ═══════════════════════════════════════════════════════
+function renderAdmin(q='') {
+  const alunos = DB.users.filter(u => u.role !== 'admin');
+  const filtered = q ? alunos.filter(u =>
+    u.name.toLowerCase().includes(q.toLowerCase()) ||
+    u.email.toLowerCase().includes(q.toLowerCase()) ||
+    (u.phone||'').includes(q)
+  ) : alunos;
+
+  const ativos    = alunos.filter(u => !u.blocked && u.active).length;
+  const ann       = alunos.filter(u => u.plan==='annual').length;
+  const mon       = alunos.filter(u => u.plan==='monthly').length;
+  const bloq      = alunos.filter(u => u.blocked).length;
+
+  let html = `<div class="wrap">
+    <div class="hd">
+      <div><div class="hd-lbl">Painel</div><div class="hd-title">Administração</div></div>
+      <button class="btn btn-green" onclick="openAddMember()"><i class="ti ti-user-plus"></i> Novo membro</button>
+    </div>
+    <div class="metrics cols4">
+      <div class="metric"><div class="metric-lbl">Ativos</div><div class="metric-val green">${ativos}</div><div class="metric-sub">${alunos.length} total</div></div>
+      <div class="metric"><div class="metric-lbl">Anuais</div><div class="metric-val">${ann}</div><div class="metric-sub up">R$ ${(ann*627).toLocaleString('pt-BR')} ARR</div></div>
+      <div class="metric"><div class="metric-lbl">Mensais</div><div class="metric-val">${mon}</div><div class="metric-sub up">R$ ${(mon*97).toLocaleString('pt-BR')} MRR</div></div>
+      <div class="metric"><div class="metric-lbl">Bloqueados</div><div class="metric-val red">${bloq}</div><div class="metric-sub"></div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-outline" onclick="renderAdmin()">Todos (${alunos.length})</button>
+      <button class="btn btn-outline" onclick="filterAdmin('annual')">Anuais (${ann})</button>
+      <button class="btn btn-outline" onclick="filterAdmin('monthly')">Mensais (${mon})</button>
+      <button class="btn btn-danger" onclick="filterAdmin('blocked')">Bloqueados (${bloq})</button>
+      <div style="flex:1;"></div>
+      <input class="inp" style="width:200px;" placeholder="Buscar..." value="${q}"
+        oninput="clearTimeout(window._ast);window._ast=setTimeout(()=>renderAdmin(this.value),300)">
+    </div>
+    <div class="tbl">
+      <div class="tbl-head gcols6"><span>Membro</span><span>Plano</span><span>Status</span><span>Aulas</span><span>Vencimento</span><span>Ação</span></div>
+      <div id="mtbody">${renderMembersRows(filtered)}</div>
+    </div>
+  </div>`;
+
+  document.getElementById('page-admin').innerHTML = html;
+}
+
+function filterAdmin(f) {
+  let list = DB.users.filter(u => u.role !== 'admin');
+  if (f==='annual')  list = list.filter(u => u.plan==='annual');
+  if (f==='monthly') list = list.filter(u => u.plan==='monthly');
+  if (f==='blocked') list = list.filter(u => u.blocked);
+  document.getElementById('mtbody').innerHTML = renderMembersRows(list);
+}
+
+function renderMembersRows(list) {
+  if (!list.length) return '<div class="empty">Nenhum membro encontrado.</div>';
+  const pubCount = DB.videos.filter(v=>v.published).length;
+  return list.map(u => {
+    const watched = DB.videos.filter(v => v.published && getProgress(u.id,v.id)===100).length;
+    const pct = pubCount ? Math.round((watched/pubCount)*100) : 0;
+    const initials = u.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    let statusCls='ok', statusTxt='Ativo';
+    if (u.blocked) { statusCls='err'; statusTxt='Bloqueado'; }
+    else if (!u.active) { statusCls='err'; statusTxt='Inativo'; }
+    else if (u.expires && new Date(u.expires)<new Date()) { statusCls='err'; statusTxt='Expirado'; }
+    else if (u.expires) {
+      const d = Math.round((new Date(u.expires)-new Date())/86400000);
+      if (d<=7) { statusCls='warn'; statusTxt='Expirando'; }
+    }
+    const expTxt = u.expires ? new Date(u.expires).toLocaleDateString('pt-BR') : '—';
+
+    return `<div class="tbl-row gcols6 clickable${u.blocked?' ':''}" onclick="openMemberModal('${u.id}')">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="m-av">${initials}</div>
+        <div><div style="font-weight:600;font-size:13px;">${u.name}</div><div style="font-size:11px;color:var(--text3);">${u.phone||u.email}</div></div>
+      </div>
+      <div><span class="chip ${u.plan==='annual'?'plan-a':'plan-m'}">${u.plan==='annual'?'Anual':'Mensal'}</span></div>
+      <div><span class="chip ${statusCls}">${statusTxt}</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div class="bar-w"><div class="bar-f" style="width:${pct}%;"></div></div><span style="font-size:10px;color:var(--text3);">${pct}%</span></div>
+      <div style="font-size:11px;color:var(--text2);">${expTxt}</div>
+      <div onclick="event.stopPropagation()">
+        ${u.blocked
+          ?`<button class="btn btn-unblock" style="padding:4px 8px;font-size:10px;" onclick="toggleBlock('${u.id}',false)"><i class="ti ti-lock-open"></i> Liberar</button>`
+          :`<button class="btn btn-danger" style="padding:4px 8px;font-size:10px;" onclick="toggleBlock('${u.id}',true)"><i class="ti ti-lock"></i> Bloquear</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleBlock(uid, block) {
+  const u = DB.users.find(x=>x.id===uid);
+  if (u) { u.blocked = block; saveDB(DB); }
+  renderAdmin();
+  toast(block ? 'Acesso bloqueado' : 'Acesso liberado', block?'e':'s');
+}
+
+function openMemberModal(uid) {
+  const u = DB.users.find(x=>x.id===uid);
+  if (!u) return;
+  const initials = u.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const pubVids = DB.videos.filter(v=>v.published);
+  const watched = pubVids.filter(v=>getProgress(u.id,v.id)===100).length;
+  const pct = pubVids.length ? Math.round((watched/pubVids.length)*100) : 0;
+
+  openModal(`
+  <div class="modal-top">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="m-av" style="width:36px;height:36px;font-size:13px;">${initials}</div>
+      <div><div class="modal-title">${u.name}</div><div style="font-size:11px;color:var(--text3);">${u.email}</div></div>
+    </div>
+    <button class="xbtn" onclick="closeModal()">×</button>
+  </div>
+  <div class="modal-body">
+    <div class="metrics cols3" style="margin-bottom:16px;">
+      <div class="metric" style="padding:12px;"><div class="metric-lbl">Plano</div><div style="font-size:15px;font-weight:700;">${u.plan==='annual'?'Anual':'Mensal'}</div></div>
+      <div class="metric" style="padding:12px;"><div class="metric-lbl">Aulas</div><div style="font-size:15px;font-weight:700;">${watched}/${pubVids.length}</div></div>
+      <div class="metric" style="padding:12px;"><div class="metric-lbl">Vencimento</div><div style="font-size:13px;font-weight:700;">${u.expires?new Date(u.expires).toLocaleDateString('pt-BR'):'Sem limite'}</div></div>
+    </div>
+    <div class="lbl">Progresso</div>
+    <div class="prog-bar" style="margin-bottom:4px;"><div class="prog-bar-fill" style="width:${pct}%"></div></div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:16px;">${pct}%</div>
+    <div class="form-row"><label class="lbl">Nome</label><input class="inp" id="em-name" value="${u.name}"></div>
+    <div class="form-row"><label class="lbl">Email</label><input class="inp" id="em-email" value="${u.email}"></div>
+    <div class="form-row"><label class="lbl">Senha</label><input class="inp" id="em-pw" value="${u.password}" type="text"></div>
+    <div class="form-row"><label class="lbl">Telefone / WhatsApp</label><input class="inp" id="em-phone" value="${u.phone||''}"></div>
+    <div class="two">
+      <div class="form-row"><label class="lbl">Plano</label>
+        <select class="sel" id="em-plan">
+          <option value="monthly" ${u.plan==='monthly'?'selected':''}>Mensal</option>
+          <option value="annual" ${u.plan==='annual'?'selected':''}>Anual</option>
+        </select>
+      </div>
+      <div class="form-row"><label class="lbl">Vencimento</label><input class="inp" id="em-expires" type="date" value="${u.expires?u.expires.slice(0,10):''}"></div>
+    </div>
+    <div class="sep"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-green" onclick="saveMemberEdit('${u.id}')">Salvar</button>
+      <button class="btn ${u.blocked?'btn-unblock':'btn-danger'}" onclick="toggleBlock('${u.id}',${!u.blocked});closeModal();">
+        <i class="ti ti-lock${u.blocked?'-open':''}"></i> ${u.blocked?'Liberar':'Bloquear'}
+      </button>
+      ${u.phone?`<a href="https://wa.me/55${u.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-outline"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>`:''}
+      <button class="btn btn-danger" style="margin-left:auto;" onclick="deleteMember('${u.id}')"><i class="ti ti-trash"></i></button>
+    </div>
+  </div>`);
+}
+
+function saveMemberEdit(uid) {
+  const u = DB.users.find(x=>x.id===uid);
+  if (!u) return;
+  u.name    = document.getElementById('em-name').value.trim();
+  u.email   = document.getElementById('em-email').value.trim().toLowerCase();
+  u.password= document.getElementById('em-pw').value.trim();
+  u.phone   = document.getElementById('em-phone').value.trim();
+  u.plan    = document.getElementById('em-plan').value;
+  u.expires = document.getElementById('em-expires').value || null;
+  saveDB(DB);
+  closeModal();
+  renderAdmin();
+  toast('Membro atualizado!');
+}
+
+function deleteMember(uid) {
+  if (!confirm('Remover este membro? Seu progresso também será apagado.')) return;
+  DB.users = DB.users.filter(x=>x.id!==uid);
+  if (DB.progress[uid]) delete DB.progress[uid];
+  saveDB(DB);
+  closeModal();
+  renderAdmin();
+  toast('Membro removido.');
+}
+
+function openAddMember() {
+  openModal(`
+  <div class="modal-top"><div class="modal-title">Novo membro</div><button class="xbtn" onclick="closeModal()">×</button></div>
+  <div class="modal-body">
+    <div class="form-row"><label class="lbl">Nome completo *</label><input class="inp" id="nm-name" placeholder="Nome do aluno"></div>
+    <div class="form-row"><label class="lbl">Email *</label><input class="inp" id="nm-email" placeholder="email@dominio.com" type="email"></div>
+    <div class="form-row"><label class="lbl">Senha *</label><input class="inp" id="nm-pw" value="avln2025" placeholder="Senha de acesso"></div>
+    <div class="form-row"><label class="lbl">Telefone / WhatsApp</label><input class="inp" id="nm-phone" placeholder="(84) 99999-0000"></div>
+    <div class="two">
+      <div class="form-row"><label class="lbl">Plano</label>
+        <select class="sel" id="nm-plan"><option value="monthly">Mensal</option><option value="annual">Anual</option></select>
+      </div>
+      <div class="form-row"><label class="lbl">Vencimento</label><input class="inp" id="nm-expires" type="date"></div>
+    </div>
+    <div class="sep"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-green" style="flex:1;" onclick="createMember()">Criar acesso</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>`);
+}
+
+function createMember() {
+  const name  = document.getElementById('nm-name').value.trim();
+  const email = document.getElementById('nm-email').value.trim().toLowerCase();
+  const pw    = document.getElementById('nm-pw').value.trim();
+  if (!name||!email||!pw) { toast('Preencha nome, email e senha','e'); return; }
+  if (DB.users.find(u=>u.email.toLowerCase()===email)) { toast('Este email já existe','e'); return; }
+
+  DB.users.push({
+    id: uid(), email, password: pw, name,
+    role: 'student',
+    phone: document.getElementById('nm-phone').value.trim(),
+    plan: document.getElementById('nm-plan').value,
+    expires: document.getElementById('nm-expires').value || null,
+    active: true, blocked: false
+  });
+  saveDB(DB);
+  closeModal();
+  renderAdmin();
+  toast('Membro criado!');
+}
+
+// ═══════════════════════════════════════════════════════
+//  ADMIN — UPLOAD / AULAS
+// ═══════════════════════════════════════════════════════
+let thumbPreviewData = '';
+
+function renderUpload() {
+  const modOpts = DB.modules.sort((a,b)=>a.order-b.order).map(m=>`<option value="${m.id}">${m.title}</option>`).join('');
+  document.getElementById('page-upload').innerHTML = `<div class="wrap">
+    <div class="hd"><div><div class="hd-lbl">Conteúdo</div><div class="hd-title">Nova aula</div></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div>
+        <div class="form-row"><label class="lbl">Título *</label><input class="inp" id="up-title" placeholder="Ex: Fundamentos do tráfego pago"></div>
+        <div class="form-row"><label class="lbl">Descrição</label><textarea class="ta" id="up-desc" placeholder="O que o aluno vai aprender..."></textarea></div>
+        <div class="form-row"><label class="lbl">Link do vídeo (YouTube ou Vimeo) *</label>
+          <input class="inp" id="up-url" placeholder="https://youtube.com/watch?v=... ou https://vimeo.com/...">
+          <div style="font-size:10px;color:var(--text3);margin-top:5px;">Cole o link do YouTube (pode ser não listado) ou Vimeo.</div>
+        </div>
+        <div class="two">
+          <div class="form-row"><label class="lbl">Módulo *</label><select class="sel" id="up-module">${modOpts}</select></div>
+          <div class="form-row"><label class="lbl">Ordem</label><input class="inp" id="up-order" type="number" value="1" min="1"></div>
+        </div>
+        <div class="form-row"><label class="lbl">Duração (ex: 38min)</label><input class="inp" id="up-dur" placeholder="38min"></div>
+        <div class="form-row"><label class="lbl">Visibilidade</label>
+          <select class="sel" id="up-pub"><option value="1">Publicado</option><option value="0">Rascunho</option></select>
+        </div>
+        <button class="btn btn-green" style="width:100%;padding:12px;font-size:12px;letter-spacing:2px;" onclick="publishVideo()">
+          <i class="ti ti-upload"></i> Publicar aula
+        </button>
+      </div>
+      <div>
+        <div class="form-row"><label class="lbl">Imagem de capa (opcional)</label>
+          <div class="drop" onclick="document.getElementById('thumb-inp').click()">
+            <i class="ti ti-photo" style="font-size:24px;color:var(--text3);"></i>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px;">JPG, PNG · Clique para selecionar</div>
+          </div>
+          <input type="file" id="thumb-inp" accept="image/*" style="display:none" onchange="previewThumb(this)">
+          <img id="thumb-preview" src="" style="display:none;width:100%;margin-top:8px;border:1px solid var(--border);max-height:160px;object-fit:cover;">
+        </div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.7;padding:12px;background:var(--bg3);border:1px solid var(--border);margin-top:8px;">
+          <strong style="color:var(--text2);">Dica de upload:</strong><br>
+          Use YouTube não listado (unlisted) para que só quem tem o link assista. Vá em <strong style="color:var(--green);">youtube.com/upload</strong>, suba o vídeo e defina como <em>Não listado</em>. Depois cole o link aqui.
+        </div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+    <div class="hd" style="margin-bottom:14px;"><div><div class="hd-lbl">Gerenciar</div><div class="hd-title" style="font-size:16px;">Aulas cadastradas</div></div></div>
+    <div class="tbl">
+      <div class="tbl-head" style="grid-template-columns:2fr 1fr 1fr .5fr .8fr;"><span>Título</span><span>Módulo</span><span>Status</span><span>Ordem</span><span>Ação</span></div>
+      ${DB.videos.sort((a,b)=>{
+        const ma=getMod(a.moduleId), mb=getMod(b.moduleId);
+        return (ma.order-mb.order)||a.order-b.order;
+      }).map(v => {
+        const mod = getMod(v.moduleId);
+        return `<div class="tbl-row" style="grid-template-columns:2fr 1fr 1fr .5fr .8fr;">
+          <div style="font-weight:600;font-size:13px;">${v.title}</div>
+          <div><span class="chip mod">${mod.badge}</span></div>
+          <div><span class="chip ${v.published?'ok':'warn'}">${v.published?'Publicado':'Rascunho'}</span></div>
+          <div style="font-size:12px;color:var(--text3);">${v.order}</div>
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-outline" style="padding:4px 8px;font-size:10px;" onclick="openEditVideo('${v.id}')"><i class="ti ti-edit"></i></button>
+            <button class="btn btn-danger" style="padding:4px 8px;font-size:10px;" onclick="deleteVideo('${v.id}')"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+  thumbPreviewData = '';
+}
+
+function previewThumb(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    thumbPreviewData = e.target.result;
+    document.getElementById('thumb-preview').src = thumbPreviewData;
+    document.getElementById('thumb-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function publishVideo() {
+  const title = document.getElementById('up-title').value.trim();
+  const url   = document.getElementById('up-url').value.trim();
+  const modId = document.getElementById('up-module').value;
+  if (!title)    { toast('Título obrigatório','e'); return; }
+  if (!url)      { toast('Cole o link do vídeo','e'); return; }
+  if (!modId)    { toast('Selecione um módulo','e'); return; }
+
+  DB.videos.push({
+    id: uid(),
+    moduleId: modId,
+    title,
+    desc:      document.getElementById('up-desc').value.trim(),
+    url,
+    thumb:     thumbPreviewData,
+    duration:  document.getElementById('up-dur').value.trim(),
+    order:     parseInt(document.getElementById('up-order').value)||1,
+    published: document.getElementById('up-pub').value==='1',
+  });
+  saveDB(DB);
+  toast('Aula publicada! 🥷');
+  thumbPreviewData = '';
+  renderUpload();
+}
+
+function openEditVideo(vid) {
+  const v = DB.videos.find(x=>x.id===vid);
+  if (!v) return;
+  const modOpts = DB.modules.sort((a,b)=>a.order-b.order).map(m=>`<option value="${m.id}" ${m.id===v.moduleId?'selected':''}>${m.title}</option>`).join('');
+
+  openModal(`
+  <div class="modal-top"><div class="modal-title">Editar aula</div><button class="xbtn" onclick="closeModal()">×</button></div>
+  <div class="modal-body">
+    <div class="form-row"><label class="lbl">Título</label><input class="inp" id="ev-title" value="${v.title}"></div>
+    <div class="form-row"><label class="lbl">Descrição</label><textarea class="ta" id="ev-desc">${v.desc||''}</textarea></div>
+    <div class="form-row"><label class="lbl">Link do vídeo</label><input class="inp" id="ev-url" value="${v.url||''}"></div>
+    <div class="two">
+      <div class="form-row"><label class="lbl">Módulo</label><select class="sel" id="ev-mod">${modOpts}</select></div>
+      <div class="form-row"><label class="lbl">Ordem</label><input class="inp" id="ev-order" type="number" value="${v.order||1}"></div>
+    </div>
+    <div class="form-row"><label class="lbl">Duração</label><input class="inp" id="ev-dur" value="${v.duration||''}"></div>
+    <div class="form-row"><label class="lbl">Visibilidade</label>
+      <select class="sel" id="ev-pub"><option value="1" ${v.published?'selected':''}>Publicado</option><option value="0" ${!v.published?'selected':''}>Rascunho</option></select>
+    </div>
+    <div class="sep"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-green" style="flex:1;" onclick="saveVideoEdit('${v.id}')">Salvar</button>
+      <button class="btn btn-danger" onclick="deleteVideo('${v.id}')"><i class="ti ti-trash"></i> Excluir</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>`);
+}
+
+function saveVideoEdit(vid) {
+  const v = DB.videos.find(x=>x.id===vid);
+  if (!v) return;
+  v.title     = document.getElementById('ev-title').value.trim();
+  v.desc      = document.getElementById('ev-desc').value.trim();
+  v.url       = document.getElementById('ev-url').value.trim();
+  v.moduleId  = document.getElementById('ev-mod').value;
+  v.order     = parseInt(document.getElementById('ev-order').value)||1;
+  v.duration  = document.getElementById('ev-dur').value.trim();
+  v.published = document.getElementById('ev-pub').value==='1';
+  saveDB(DB);
+  closeModal();
+  renderUpload();
+  toast('Aula atualizada!');
+}
+
+function deleteVideo(vid) {
+  if (!confirm('Excluir esta aula? O progresso dos alunos será apagado.')) return;
+  DB.videos = DB.videos.filter(x=>x.id!==vid);
+  Object.keys(DB.progress).forEach(uid => { if (DB.progress[uid][vid]) delete DB.progress[uid][vid]; });
+  saveDB(DB);
+  closeModal();
+  renderUpload();
+  toast('Aula excluída.');
+}
+
+// ═══════════════════════════════════════════════════════
+//  ADMIN — MÓDULOS
+// ═══════════════════════════════════════════════════════
+function renderModulos() {
+  let html = `<div class="wrap">
+    <div class="hd">
+      <div><div class="hd-lbl">Estrutura</div><div class="hd-title">Módulos</div></div>
+      <button class="btn btn-green" onclick="openAddModule()"><i class="ti ti-plus"></i> Novo módulo</button>
+    </div>
+    <div class="tbl">
+      <div class="tbl-head" style="grid-template-columns:2fr 1fr 1fr 1fr;"><span>Módulo</span><span>Badge</span><span>Aulas</span><span>Ação</span></div>
+      ${DB.modules.sort((a,b)=>a.order-b.order).map(m => {
+        const count = DB.videos.filter(v=>v.moduleId===m.id).length;
+        return `<div class="tbl-row" style="grid-template-columns:2fr 1fr 1fr 1fr;">
+          <div style="font-weight:700;font-size:14px;">${m.title}</div>
+          <div><span class="chip mod">${m.badge}</span></div>
+          <div style="font-size:13px;color:var(--text2);">${count}</div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline" style="padding:4px 8px;font-size:10px;" onclick="openEditModule('${m.id}')"><i class="ti ti-edit"></i></button>
+            <button class="btn btn-danger"  style="padding:4px 8px;font-size:10px;" onclick="deleteModule('${m.id}')"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+  document.getElementById('page-modulos').innerHTML = html;
+}
+
+function openAddModule() {
+  openModal(`
+  <div class="modal-top"><div class="modal-title">Novo módulo</div><button class="xbtn" onclick="closeModal()">×</button></div>
+  <div class="modal-body">
+    <div class="form-row"><label class="lbl">Título *</label><input class="inp" id="nm-mod-title" placeholder="Ex: Módulo 01 — Fundamentos"></div>
+    <div class="form-row"><label class="lbl">Badge (texto curto)</label><input class="inp" id="nm-mod-badge" placeholder="MOD 01"></div>
+    <div class="form-row"><label class="lbl">Ordem</label><input class="inp" id="nm-mod-order" type="number" value="${DB.modules.length+1}"></div>
+    <div class="sep"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-green" style="flex:1;" onclick="saveNewModule()">Criar</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>`);
+}
+
+function openEditModule(mid) {
+  const m = DB.modules.find(x=>x.id===mid);
+  if (!m) return;
+  openModal(`
+  <div class="modal-top"><div class="modal-title">Editar módulo</div><button class="xbtn" onclick="closeModal()">×</button></div>
+  <div class="modal-body">
+    <div class="form-row"><label class="lbl">Título</label><input class="inp" id="em-mod-title" value="${m.title}"></div>
+    <div class="form-row"><label class="lbl">Badge</label><input class="inp" id="em-mod-badge" value="${m.badge||''}"></div>
+    <div class="form-row"><label class="lbl">Ordem</label><input class="inp" id="em-mod-order" type="number" value="${m.order}"></div>
+    <div class="sep"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-green" style="flex:1;" onclick="saveEditModule('${m.id}')">Salvar</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>`);
+}
+
+function saveNewModule() {
+  const title = document.getElementById('nm-mod-title').value.trim();
+  if (!title) { toast('Título obrigatório','e'); return; }
+  DB.modules.push({
+    id: uid(), title,
+    badge: document.getElementById('nm-mod-badge').value.trim() || 'MOD',
+    order: parseInt(document.getElementById('nm-mod-order').value) || DB.modules.length+1,
+  });
+  saveDB(DB); closeModal(); renderModulos(); toast('Módulo criado!');
+}
+
+function saveEditModule(mid) {
+  const m = DB.modules.find(x=>x.id===mid);
+  if (!m) return;
+  m.title = document.getElementById('em-mod-title').value.trim();
+  m.badge = document.getElementById('em-mod-badge').value.trim();
+  m.order = parseInt(document.getElementById('em-mod-order').value) || m.order;
+  saveDB(DB); closeModal(); renderModulos(); toast('Módulo atualizado!');
+}
+
+function deleteModule(mid) {
+  const count = DB.videos.filter(v=>v.moduleId===mid).length;
+  if (count && !confirm(`Este módulo tem ${count} aulas. Excluir mesmo assim?`)) return;
+  DB.modules = DB.modules.filter(x=>x.id!==mid);
+  saveDB(DB); renderModulos(); toast('Módulo excluído.');
+}
+
+// ═══════════════════════════════════════════════════════
+//  MATRIX BACKGROUND
+// ═══════════════════════════════════════════════════════
+function startMatrix() {
+  const c = document.getElementById('matrix-canvas');
+  const ctx = c.getContext('2d');
+  function resize() { c.width=innerWidth; c.height=innerHeight; }
+  resize(); addEventListener('resize', resize);
+  const cols = Math.floor(innerWidth/20);
+  const drops = Array(cols).fill(1);
+  setInterval(() => {
+    ctx.fillStyle='rgba(10,13,10,0.05)';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#00ff41';
+    ctx.font='14px monospace';
+    drops.forEach((y,i) => {
+      ctx.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, y*20);
+      if (y*20>c.height&&Math.random()>.975) drops[i]=0;
+      drops[i]++;
+    });
+  }, 50);
+}
+</script>
+</body>
+</html>
