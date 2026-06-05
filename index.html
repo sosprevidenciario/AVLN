@@ -290,32 +290,23 @@ sb.auth.getSession().then(async ({ data: { session } }) => {
   if (session) {
     currentUser = session.user;
     isAdmin = currentUser.email === ADMIN_EMAIL;
-    if (!isAdmin) {
-      const { data: profile } = await sb.from('profiles').select('blocked,active').eq('id', currentUser.id).single();
-      if (profile?.blocked || profile?.active === false) {
-        await sb.auth.signOut(); showLogin(); return;
-      }
-    }
-    await loadData(); showApp();
-  } else { showLogin(); }
+    await loadData();
+    showApp();
+  } else {
+    showLogin();
+  }
 });
 
 sb.auth.onAuthStateChange(async (event, session) => {
   if (event === 'SIGNED_IN' && session) {
     currentUser = session.user;
     isAdmin = currentUser.email === ADMIN_EMAIL;
-    if (!isAdmin) {
-      const { data: profile } = await sb.from('profiles').select('blocked,active').eq('id', currentUser.id).single();
-      if (profile?.blocked || profile?.active === false) {
-        await sb.auth.signOut();
-        const errEl = document.getElementById('login-err');
-        if (errEl) { errEl.textContent = 'Seu acesso está bloqueado. Contate o administrador.'; errEl.classList.remove('hidden'); }
-        showLogin(); return;
-      }
-    }
-    await loadData(); showApp();
+    await loadData();
+    showApp();
   }
-  if (event === 'SIGNED_OUT') { showLogin(); }
+  if (event === 'SIGNED_OUT') {
+    showLogin();
+  }
 });
 
 // ═══════════════════════════════════════════
