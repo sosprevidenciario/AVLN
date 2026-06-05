@@ -486,10 +486,32 @@ async function doRegister() {
   if (pw !== pw2) { errEl.textContent='As senhas não coincidem.'; errEl.classList.remove('hidden'); return; }
   btn.disabled=true; btn.textContent='Criando...';
   const {data,error} = await sb.auth.signUp({email, password:pw, options:{data:{full_name:name}}});
-  if (error) { errEl.textContent=error.message; errEl.classList.remove('hidden'); btn.disabled=false; btn.textContent='Criar conta'; return; }
-  if (data?.user) {
+  
+  // Se erro for rate limit de email mas o usuario foi criado, continua normalmente
+  const isRateLimit = error?.message?.toLowerCase().includes('rate limit') || error?.message?.toLowerCase().includes('email');
+  
+  if (error && !isRateLimit) { 
+    errEl.textContent=error.message; errEl.classList.remove('hidden'); 
+    btn.disabled=false; btn.textContent='Criar conta'; return; 
+  }
+  
+  // Tenta fazer login pra ver se a conta foi criada
+  if (error && isRateLimit) {
+    const {data:loginData, error:loginErr} = await sb.auth.signInWithPassword({email, password:pw});
+    if (loginErr) {
+      errEl.textContent='Erro ao criar conta. Tente novamente em alguns minutos.';
+      errEl.classList.remove('hidden');
+      btn.disabled=false; btn.textContent='Criar conta'; return;
+    }
+    // Conta criada com sucesso, salva perfil
+    if (loginData?.user) {
+      await sb.from('profiles').upsert({id:loginData.user.id, email, full_name:name, active:false, blocked:true, plan:'monthly'}).catch(()=>{});
+      await sb.auth.signOut();
+    }
+  } else if (data?.user) {
     await sb.from('profiles').upsert({id:data.user.id, email, full_name:name, active:false, blocked:true, plan:'monthly'}).catch(()=>{});
   }
+  
   okEl.classList.remove('hidden');
   btn.disabled=true; btn.textContent='Conta criada!';
 }
