@@ -984,8 +984,16 @@ async function openMemberModal(id) {
         <i class="ti ti-lock${m.blocked?'-open':''}"></i> ${m.blocked?'Liberar':'Bloquear'}
       </button>
       ${m.phone?`<a href="https://wa.me/55${m.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-outline"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>`:''}
+      <button class="btn btn-danger" onclick="removerMembro('${m.id}','${(m.full_name||m.email||'').replace(/'/g,'')}');closeModal();" style="margin-left:auto;"><i class="ti ti-trash"></i> Remover</button>
     </div>
   </div>`);
+}
+
+async function removerMembro(id, nome) {
+  if (!confirm('Remover ' + nome + ' permanentemente? Esta ação não pode ser desfeita.')) return;
+  await sb.from('profiles').delete().eq('id', id);
+  renderAdmin();
+  toast('Membro removido.');
 }
 
 async function saveMemberEdit(id) {
